@@ -36,7 +36,7 @@ def add_data_to_db(chat_ID, event_date, event_name, repeating):
 
 def check_record_exists(chat_ID, event_date, event_name):
     """Проверка существования записи"""
-    query = 'SELECT id FROM "Events" WHERE "chat_ID" = %s AND "event_name" = %s AND "event_date" = %s'
+    query = 'SELECT ID FROM "Events" WHERE "chat_ID" = %s AND "event_name" = %s AND "event_date" = %s'
     result = execute_query(query, (chat_ID, event_name, event_date))
     return bool(result)  # Возвращаем True, если запись существует, и False в противном случае
 
