@@ -1,25 +1,110 @@
 import telebot
+from telebot import types
+import time
+import datetime
+import event_service
 
-bot = telebot.TeleBot(token='')
+bot = telebot.TeleBot(token='7966855356:AAEp-siw_TF5kbfpKczM7CyeOnDkazaRGfw')
+
+current_transactions = {}
+
+
+def check_transaction_timeout():
+    # Directly remove timed-out transactions
+    keys_to_remove = [key for key, value in current_transactions.items() if value[0] + 5 * 60 <= time.time()]
+    delete_transactions(keys_to_remove)
+
+
+def delete_transactions(keys):
+    for key in keys:
+        bot.send_message(key, "Transaction timed out")
+        current_transactions.pop(key, None)  # Use pop with default to avoid errors
+
+
+@bot.message_handler()
+def handle_replies(message):
+    message_text = message.text
+    if message_text not in ["/start", "/help", "/addevent", "/addrepeatingevent",
+                            "/deleteevent", "/allevents", "/cancel", "/stop"]:
+        chat_id = message.chat.id
+        if chat_id in current_transactions:
+            halves = message_text.split(" - ")
+            if len(halves) == 2:
+                valid_date = validate_date(halves[0])
+                event_name = halves[1]
+                if valid_date and len(event_name) <= 100:
+                    # Process the event here
+                    pass
+                else:
+                    error_message = "Invalid input."
+                    if not valid_date:
+                        error_message = "Invalid date. Please use the format dd.MM.yyyy."
+                    if len(event_name) > 100:
+                        error_message = "Event name must be under 100 characters."
+                    bot.send_message(chat_id, error_message)
+            else:
+                bot.send_message(chat_id, "Invalid input format. Use 'dd.MM.yyyy - event name'.")
+
+    print(message.text)
+
+
+def validate_date(date_string):
+    date_format = "%d.%m.%Y"
+    try:
+        datetime.datetime.strptime(date_string, date_format)
+        return True
+    except ValueError:
+        return False
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, f"Hello {message.chat.username}!")
+    print(message)
 
 
-@bot.message_handler(commands=['addNewOccasion'])
+@bot.message_handler(commands=['addrepeatingevent'])
 def add_new_occasion(message):
-    print(message.chat.id)
+    bot.send_message(message.chat.id, "Insert Holiday name")
+    current_transactions[message.chat.id] = [time.time(), True]
+    print("add new holiday")
 
-@bot.message_handler(content_types=['deleteHoliday'])
+
+@bot.message_handler(commands=['addevent'])
+def add_new_occasion(message):
+    bot.send_message(message.chat.id, "Insert Holiday name")
+    current_transactions[message.chat.id] = [time.time(), False]
+    print("add new holiday")
+
+
+@bot.message_handler(commands=['deleteevent'])
 def delete_holiday(message):
-    print()
+    chat_events = event_service.get_events_by_chat_id(message.chat.id)
+    markup = types.InlineKeyboardMarkup()
+    for event in chat_events:
+        markup.add(types.InlineKeyboardButton(text=f'{event[1]} - {event[2]}',
+                                              callback_data=event[3]))
+    bot.reply_to(message, reply_markup=markup)
 
-@bot.message_handler()
-def info(message):
-    if message.text.lower() == "hola":
-        bot.send_message(message.chat.id, "Hola, Combrero")
-    elif message.text.lower() == "tere":
-        bot.send_message(message.chat.id, "Tere, tere vanakere")
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(callback):
+    event_service.delete_holiday(callback.data)
+    bot.send_message(callback.message.chat.id, "Event deleted")
+
+@bot.message_handler(commands=['allevents'])
+def all_holidays(message):
+    print("all holidays")
+
+
+@bot.message_handler(commands=['cancel'])
+def cancel(message):
+    print("cancel")
+
+
+@bot.message_handler(commands=['stop'])
+def stop(message):
+    print("stop")
+
 
 bot.polling(non_stop=True)
