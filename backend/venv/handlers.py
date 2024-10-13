@@ -33,8 +33,7 @@ def handle_replies(message):
                 valid_date = validate_date(halves[0])
                 event_name = halves[1]
                 if valid_date and len(event_name) <= 100:
-                    # Process the event here
-                    pass
+                    event_service.add_data_to_db(chat_id, halves[0], event_name, current_transactions[chat_id][1])
                 else:
                     error_message = "Invalid input."
                     if not valid_date:
@@ -89,7 +88,7 @@ def delete_holiday(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(callback):
-    event_service.delete_holiday(callback.data)
+    event_service.delete_data_from_db(callback.data)
     bot.send_message(callback.message.chat.id, "Event deleted")
 
 @bot.message_handler(commands=['allevents'])
@@ -99,6 +98,7 @@ def all_holidays(message):
 
 @bot.message_handler(commands=['cancel'])
 def cancel(message):
+    current_transactions.pop(message.chat.id)
     print("cancel")
 
 
