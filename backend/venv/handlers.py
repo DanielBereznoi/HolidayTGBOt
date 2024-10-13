@@ -4,7 +4,7 @@ import time
 import datetime
 import event_service
 
-bot = telebot.TeleBot(token='7966855356:AAEp-siw_TF5kbfpKczM7CyeOnDkazaRGfw')
+bot = telebot.TeleBot(token='7966855356:AAH2joiFprLhy0Qo-WCT0FNv45jMjlXRYOU')
 
 current_transactions = {}
 
