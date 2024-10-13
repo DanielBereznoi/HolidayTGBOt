@@ -3,8 +3,9 @@ from telebot import types
 import time
 import datetime
 import event_service
+import saved_token 
 
-bot = telebot.TeleBot(token='7966855356:AAH2joiFprLhy0Qo-WCT0FNv45jMjlXRYOU')
+bot = telebot.TeleBot(token = saved_token.token)
 
 current_transactions = {}
 
