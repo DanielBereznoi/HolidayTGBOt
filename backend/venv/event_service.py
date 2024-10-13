@@ -24,25 +24,28 @@ def get_data_from_db():
 
 def add_data_to_db(chat_ID, event_date, event_name, repeating):
     """SQL-запрос добавления данных с новым столбцом"""
+    # Проверяем, существует ли уже запись с таким chat_ID, event_date и event_name
+    if check_record_exists(chat_ID, event_date, event_name):
+        print("Ошибка: запись уже существует.")
+        return
+
+    # Если записи нет, добавляем новую
     execute_query('INSERT INTO "Events" ("chat_ID", "event_name", "event_date", "repeating") VALUES (%s, %s, %s, %s)', 
                   (chat_ID, event_name, event_date, repeating))
     print("Данные добавлены.")
 
-
 def check_record_exists(chat_ID, event_date, event_name):
-    # Проверка существования записи
+    """Проверка существования записи"""
     query = 'SELECT id FROM "Events" WHERE "chat_ID" = %s AND "event_name" = %s AND "event_date" = %s'
     result = execute_query(query, (chat_ID, event_name, event_date))
-    return result
+    return bool(result)  # Возвращаем True, если запись существует, и False в противном случае
+
 
 def delete_data_from_db(identifier):
     # SQL-запрос удаления данных
-    record = check_record_exists(identifier)
-    if record:
-        execute_query('DELETE FROM "Events" WHERE id = %s', (identifier,))
-        print("Данные удалены.")
-    else:
-        print("Ошибка: Запись не найдена.")
+    execute_query('DELETE FROM "Events" WHERE "ID" = %s', (identifier,))
+    print("Данные удалены.")
+
 
 
 def get_events_by_chat_id(chat_ID):
