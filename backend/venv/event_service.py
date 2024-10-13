@@ -22,17 +22,12 @@ def get_data_from_db():
     for row in rows:
         print(row)
 
-def add_data_to_db_false(chat_ID, event_date, event_name, repeating=False):
-    # SQL-запрос добавления данных с новым столбцом
+def add_data_to_db(chat_ID, event_date, event_name, repeating):
+    """SQL-запрос добавления данных с новым столбцом"""
     execute_query('INSERT INTO "Events" ("chat_ID", "event_name", "event_date", "repeating") VALUES (%s, %s, %s, %s)', 
                   (chat_ID, event_name, event_date, repeating))
     print("Данные добавлены.")
-    
-def add_data_to_db_true(chat_ID, event_date, event_name, repeating=True):
-    # SQL-запрос добавления данных с новым столбцом
-    execute_query('INSERT INTO "Events" ("chat_ID", "event_name", "event_date", "repeating") VALUES (%s, %s, %s, %s)', 
-                  (chat_ID, event_name, event_date, repeating))
-    print("Данные добавлены.")
+
 
 def check_record_exists(chat_ID, event_date, event_name):
     # Проверка существования записи
