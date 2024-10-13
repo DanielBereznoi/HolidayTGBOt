@@ -5,6 +5,7 @@ from events import get_all_events_today  # Импорт новой функци�
 def check_events_daily():
     """Проверка наличия событий на сегодня и уведомление пользователя."""
     try:
+        print("Checking events daily...")
         rows = get_all_events_today()
         if rows:
             # Логика уведомления пользователя
@@ -25,7 +26,7 @@ def job():
 def run_scheduler():
     """Запуск планировщика для проверки каждый час."""
     schedule.every().hour.do(job)
-
+    print("Running...")
     while True:
         schedule.run_pending()
         time.sleep(3500)  # Проверка в сек
