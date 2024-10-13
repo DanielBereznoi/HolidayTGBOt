@@ -27,7 +27,7 @@ def add_data_to_db(chat_ID, event_date, event_name, repeating):
     # Проверяем, существует ли уже запись с таким chat_ID, event_date и event_name
     if check_record_exists(chat_ID, event_date, event_name):
         print("Ошибка: запись уже существует.")
-        return bool(result)
+        return bool()
 
     # Если записи нет, добавляем новую
     execute_query('INSERT INTO "Events" ("chat_ID", "event_name", "event_date", "repeating") VALUES (%s, %s, %s, %s)', 
