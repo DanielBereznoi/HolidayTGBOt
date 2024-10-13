@@ -11,7 +11,7 @@ def execute_query(query, params=None):
 
 def get_data_from_db():
     # Выполняем запрос для получения всех данных из таблицы
-    rows = execute_query('SELECT * FROM "Holiday"')
+    rows = execute_query('SELECT * FROM "Events"')
     
     # Выводим данные
     print("Данные из таблицы:")
@@ -20,12 +20,12 @@ def get_data_from_db():
 
 def add_data_to_db(new_data):
     # SQL-запрос добавления данных
-    execute_query('INSERT INTO "Holiday" (column1, column2) VALUES (%s, %s)', new_data)
+    execute_query('INSERT INTO "Events" (column1, column2) VALUES (%s, %s)', new_data)
     print("Данные добавлены.")
 
 def delete_data_from_db(identifier):
     # SQL-запрос удаления данных по id
-    execute_query('DELETE FROM "Holiday" WHERE id = %s', (identifier,))
+    execute_query('DELETE FROM "Events" WHERE id = %s', (identifier,))
     print("Данные удалены.")
 
 # Вызов функции для получения данных
