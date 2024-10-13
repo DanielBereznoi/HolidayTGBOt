@@ -39,7 +39,7 @@ def delete_data_from_db(identifier):
     # SQL-запрос удаления данных
     record = check_record_exists(identifier)
     if record:
-        execute_query('DELETE FROM "Events" WHERE id = %s', (identifier,))
+        execute_query('DELETE FROM "Events" WHERE "ID" = %s', (identifier,))
         print("Данные удалены.")
     else:
         print("Ошибка: Запись не найдена.")
