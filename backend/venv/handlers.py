@@ -1,4 +1,5 @@
 from contextlib import suppress
+from time import sleep
 
 import telebot
 from six import print_
@@ -7,25 +8,41 @@ import time
 import datetime
 import event_service
 import saved_token
+import threading
 
 bot = telebot.TeleBot(token=saved_token.token)
 
 current_transactions = {}
 
+neares_date = None
+
+event_service.update_date()
 
 def check_transaction_timeout():
-    print("Checking transaction timeout...")
-    # Directly remove timed-out transactions
-    keys_to_remove = [key for key, value in current_transactions.items() if value[0] + 5 * 60 <= time.time()]
-    delete_transactions(keys_to_remove)
+    while True:
+        print("Checking transaction timeout...")
+        # Directly remove timed-out transactions
+        keys_to_remove = [key for key, value in current_transactions.items() if value[0] + 2 * 60 <= time.time()]
+        delete_transactions(keys_to_remove)
+        time.sleep(10)
 
 
 def delete_transactions(keys):
-    print('Deleting transactions...')
     for key in keys:
+        print('Deleting transactions...')
         bot.send_message(key, "Transaction timed out")
         current_transactions.pop(key, None)  # Use pop with default to avoid errors
 
+# def check_date():
+#     while True:
+#         events = event_service.check_date()
+#         if len(events) == 0:
+#             pass
+#         else:
+#             sleep(3600)
+t = threading.Thread(target=check_transaction_timeout)
+
+t.start()
 
 def validate_date(date_string):
     date_format = "%d.%m.%Y"
