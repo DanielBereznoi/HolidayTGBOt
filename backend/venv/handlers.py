@@ -6,9 +6,9 @@ from telebot import types
 import time
 import datetime
 import event_service
-import saved_token 
+import saved_token
 
-bot = telebot.TeleBot(token = saved_token.token)
+bot = telebot.TeleBot(token=saved_token.token)
 
 current_transactions = {}
 
@@ -25,8 +25,6 @@ def delete_transactions(keys):
     for key in keys:
         bot.send_message(key, "Transaction timed out")
         current_transactions.pop(key, None)  # Use pop with default to avoid errors
-
-
 
 
 def validate_date(date_string):
@@ -73,9 +71,14 @@ def callback_query(callback):
     event_service.delete_data_from_db(callback.data)
     bot.send_message(callback.message.chat.id, "Event deleted")
 
+
 @bot.message_handler(commands=['allevents'])
 def all_holidays(message):
-    print("all holidays")
+    events = event_service.get_events_by_chat_id(message.chat.id)
+    reply = ""
+    for event in events:
+        reply += f'{event[1].strftime("%d.%m.%Y")} - {event[2]}\n'
+    bot.reply_to(message, reply)
 
 
 @bot.message_handler(commands=['cancel'])
@@ -87,6 +90,7 @@ def cancel(message):
 @bot.message_handler(commands=['stop'])
 def stop(message):
     print("stop")
+
 
 @bot.message_handler()
 def handle_replies(message):
@@ -100,7 +104,8 @@ def handle_replies(message):
                 valid_date = validate_date(halves[0])
                 event_name = halves[1]
                 if valid_date and len(event_name) <= 100:
-                    succeeded = event_service.add_data_to_db(chat_id, halves[0], event_name, current_transactions[chat_id][1])
+                    succeeded = event_service.add_data_to_db(chat_id, halves[0], event_name,
+                                                             current_transactions[chat_id][1])
                     if not succeeded:
                         bot.reply_to(message, "Ti debil")
                     else:
@@ -117,4 +122,6 @@ def handle_replies(message):
                 bot.send_message(chat_id, "Invalid input format. Use 'dd.MM.yyyy - event name'.")
 
     print(message.text)
+
+
 bot.polling(non_stop=True)
