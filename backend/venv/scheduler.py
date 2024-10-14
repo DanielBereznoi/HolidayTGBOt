@@ -1,11 +1,11 @@
 import time
 import schedule
-from events import get_all_events_today  # Импорт новой функции из другого файла
+from events import get_events_by_today  # Импорт новой функции из другого файла
 
 def check_events_daily():
     """Проверка наличия событий на сегодня и уведомление пользователя."""
     try:
-        rows = get_all_events_today()
+        rows = get_events_by_today()
         if rows:
             # Логика уведомления пользователя
             print("Сегодня у вас есть следующие события:")
@@ -15,7 +15,6 @@ def check_events_daily():
             print("Сегодня нет событий.")
     except Exception as e:
         print(f"Ошибка при проверке событий: {e}")
-
 
 def job():
     """Работа"""
@@ -28,7 +27,7 @@ def run_scheduler():
 
     while True:
         schedule.run_pending()
-        time.sleep(3500)  # Проверка в сек
+        time.sleep(35)  # Проверка в секундах
 
 # Пример использования
 if __name__ == "__main__":
