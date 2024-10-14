@@ -5,7 +5,11 @@ from events import get_events_by_today  # Импорт новой функции
 def check_events_daily():
     """Проверка наличия событий на сегодня и уведомление пользователя."""
     try:
+
         rows = get_events_by_today()
+        print("Checking events daily...")
+        rows = get_all_events_today()
+
         if rows:
             # Логика уведомления пользователя
             print("Сегодня у вас есть следующие события:")
@@ -24,7 +28,7 @@ def job():
 def run_scheduler():
     """Запуск планировщика для проверки каждый час."""
     schedule.every().hour.do(job)
-
+    print("Running...")
     while True:
         schedule.run_pending()
         time.sleep(35)  # Проверка в секундах
