@@ -1,6 +1,8 @@
 import psycopg2
 from db_connection import get_connection
 
+nearest_date = None
+
 def execute_query(query, params=None):
     """Optimisation"""
     try:
@@ -19,8 +21,11 @@ def get_data_from_db():
     
     # Выводим данные
     print("Данные из таблицы:")
-    for row in rows:
-        print(row)
+    if rows:
+        for row in rows:
+            print(row)
+    else:
+        print("Нет данных в таблице.")
 
 def add_data_to_db(chat_ID, event_date, event_name, repeating):
     """SQL-запрос добавления данных с новым столбцом"""
@@ -28,12 +33,13 @@ def add_data_to_db(chat_ID, event_date, event_name, repeating):
     if check_record_exists(chat_ID, event_date, event_name):
         print("Ошибка: запись уже существует.")
         return False
-
+    
     # Если записи нет, добавляем новую
     execute_query('INSERT INTO "Events" ("chat_ID", "event_name", "event_date", "repeating") VALUES (%s, %s, %s, %s)', 
                   (chat_ID, event_name, event_date, repeating))
+    update_date()
     return True
-
+    
 def check_record_exists(chat_ID, event_date, event_name):
     """Проверка существования записи"""
     query = 'SELECT "ID" FROM "Events" WHERE "chat_ID" = %s AND "event_name" = %s AND "event_date" = %s'
@@ -45,7 +51,7 @@ def delete_data_from_db(identifier):
     # SQL-запрос удаления данных
     execute_query('DELETE FROM "Events" WHERE "ID" = %s', (identifier,))
     print("Данные удалены.")
-
+    update_date()
 
 
 def get_events_by_chat_id(chat_ID):
@@ -58,17 +64,21 @@ def get_events_by_today(chat_ID):
     """Получение всех событий для пользователя за сегодня"""
     query = '''
         SELECT * FROM "Events" 
-        WHERE "chat_ID" = %s AND "event_date" = CURRENT_DATE
+        WHERE "event_date" = CURRENT_DATE
     '''
     rows = execute_query(query, (chat_ID,))
+    return rows  # Добавлено
+
+    rows = execute_query(query, (chat_ID,))
+
+def update_date():
+    """Получение всех событий и обновление ближайшей даты"""
+    updating_date = '''
+        SELECT "event_date" from "Events" order by "event_date" limit 1
+    '''
+    nearest_date = execute_query(updating_date)
+    print("nearest_date = " + nearest_date)
     
-    print(f"События для Вас {chat_ID} на сегодня:")
-    if rows:
-        for row in rows:
-            print(row)
-    else:
-        print("Нет событий на сегодня для данного Вас.")
-    return rows
 
 # Вызов функции для получения данных
 if __name__ == "__main__":
