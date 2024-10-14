@@ -77,7 +77,7 @@ def update_date():
         SELECT "event_date" from "Events" order by "event_date" limit 1
     '''
     nearest_date = execute_query(updating_date)[0][0]
-    print("nearest_date = " + nearest_date) 
+    print("nearest_date = " + str(nearest_date)) 
     
 
 # Вызов функции для получения данных
