@@ -1,5 +1,6 @@
 import psycopg2
 from db_connection import get_connection
+from datetime import datetime, timedelta
 
 nearest_date = None
 
@@ -17,7 +18,7 @@ def execute_query(query, params=None):
 
 def get_data_from_db():
     # Выполняем запрос для получения всех данных из таблицы
-    rows = execute_query('SELECT * FROM "Events"')
+    rows = execute_query('SELECT "chat_ID", "event_date", "event_name", "ID", "repeating" FROM "Events"')
     
     # Выводим данные
     print("Данные из таблицы:")
@@ -56,20 +57,18 @@ def delete_data_from_db(identifier):
 
 def get_events_by_chat_id(chat_ID):
     # Получение всех событий для пользователя, отсортированных по дате
-    query = 'SELECT * FROM "Events" WHERE "chat_ID" = %s ORDER BY "event_date"'
+    query = 'SELECT "chat_ID", "event_date", "event_name", "ID", "repeating" FROM "Events" WHERE "chat_ID" = %s ORDER BY "event_date"'
     rows = execute_query(query, (chat_ID,))
     return rows
 
-def get_events_by_today(chat_ID):
+def get_events_by_today():
     """Получение всех событий для пользователя за сегодня"""
     query = '''
-        SELECT * FROM "Events" 
+        SELECT "chat_ID", "event_date", "event_name", "ID", "repeating" FROM "Events" 
         WHERE "event_date" = CURRENT_DATE
     '''
-    rows = execute_query(query, (chat_ID,))
+    rows = execute_query(query)
     return rows  # Добавлено
-
-    rows = execute_query(query, (chat_ID,))
 
 def update_date():
     """Получение всех событий и обновление ближайшей даты"""
@@ -78,8 +77,30 @@ def update_date():
     '''
     nearest_date = execute_query(updating_date)[0][0]
     print("nearest_date = " + str(nearest_date)) 
-    
 
+def check_dates():
+    current_date = datetime.now()
+    #compaired
+    if current_date < nearest_date:
+        return False
+    elif current_date > nearest_date:
+        return False
+    else:
+        return True
+    
+def update_events(events):
+    updated_events = []
+    deleted_events = []
+    for event in events:
+        chat_id, event_date, event_name, ID, repeating = event
+        
+        if repeating:  # Если repeating равно True Добавляем 1 год к дате события
+            updated_date = event_date.replace(year=event_date.year + 1)
+            updated_events.append((chat_id, updated_date, event_name, ID, repeating))
+        else:
+            deleted_events.append(ID)
+            
 # Вызов функции для получения данных
 if __name__ == "__main__":
     get_data_from_db()
+
