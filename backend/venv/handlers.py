@@ -18,6 +18,7 @@ neares_date = None
 
 event_service.update_date()
 
+
 def check_transaction_timeout():
     while True:
         print("Checking transaction timeout...")
@@ -33,16 +34,23 @@ def delete_transactions(keys):
         bot.send_message(key, "Transaction timed out")
         current_transactions.pop(key, None)  # Use pop with default to avoid errors
 
-# def check_date():
-#     while True:
-#         events = event_service.check_date()
-#         if len(events) == 0:
-#             pass
-#         else:
-#             sleep(3600)
+
+def check_date():
+    while True:
+        is_eventful_day = event_service.check_date()
+        if is_eventful_day:
+            events_for_today = event_service.get_events_by_today()
+            for event in events_for_today:
+                bot.send_message(event[0], f'Don\'t forget about {event[2]}!')
+            event_service.upadate_events(events_for_today)
+        else:
+            sleep(3600)
+
+
 t = threading.Thread(target=check_transaction_timeout)
 
 t.start()
+
 
 def validate_date(date_string):
     date_format = "%d.%m.%Y"
