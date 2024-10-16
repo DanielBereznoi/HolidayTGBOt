@@ -106,7 +106,10 @@ def all_holidays(message):
     events = event_service.get_events_by_chat_id(message.chat.id)
     reply = ""
     for event in events:
-        reply += f'{event[1].strftime("%d.%m.%Y")} - {event[2]}\n'
+        repeating_str = "Non-repeating"
+        if event[4]:
+            repeating_str = "Repeating"
+        reply += f'{event[1].strftime("%d.%m.%Y")} - {event[2]} - {repeating_str}\n'
     if len(reply) == 0:
         reply = "You have no saved events"
     bot.reply_to(message, reply)
