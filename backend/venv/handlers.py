@@ -5,7 +5,7 @@ import telebot
 from six import print_
 from telebot import types
 import time
-import datetime
+from datetime import date, datetime
 import event_service
 import saved_token
 import threading
@@ -26,9 +26,10 @@ def check_transaction_timeout():
 
 def delete_transactions(keys):
     for key in keys:
-        print('Deleting transactions...')
-        bot.send_message(key, "Transaction timed out")
-        current_transactions.pop(key, None)  # Use pop with default to avoid errors
+        if key in current_transactions:
+            print('Deleting transactions...')
+            bot.send_message(key, "Transaction timed out")
+            current_transactions.pop(key, None)  # Use pop with default to avoid errors
 
 
 def check_date():
@@ -55,8 +56,8 @@ date_check_thread.start()
 def validate_date(date_string):
     date_format = "%d.%m.%Y"
     try:
-        date = datetime.datetime.strptime(date_string, date_format)
-        if date > datetime.date.today():
+        inserted_date = datetime.strptime(date_string, date_format)
+        if inserted_date > inserted_date.today():
             return True
         else:
             return False
@@ -100,12 +101,14 @@ def callback_query(callback):
     bot.send_message(callback.message.chat.id, "Event deleted")
 
 
-@bot.message_handler(commands=['allevents'])
+@bot.message_handler(commands=['list'])
 def all_holidays(message):
     events = event_service.get_events_by_chat_id(message.chat.id)
     reply = ""
     for event in events:
         reply += f'{event[1].strftime("%d.%m.%Y")} - {event[2]}\n'
+    if len(reply) == 0:
+        reply = "You have no saved events"
     bot.reply_to(message, reply)
 
 
