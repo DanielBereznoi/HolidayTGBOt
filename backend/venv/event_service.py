@@ -1,6 +1,6 @@
 import psycopg2
 from db_connection import get_connection
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 nearest_date = None
 
@@ -76,6 +76,7 @@ def get_events_by_today():
 
 
 def update_date():
+    global nearest_date
     """Получение всех событий и обновление ближайшей даты"""
     updating_date = '''
         SELECT "event_date" from "Events" order by "event_date" limit 1
@@ -85,14 +86,23 @@ def update_date():
 
 
 def check_dates():
-    current_date = datetime.now()
-    # compaired
-    if current_date < nearest_date:
-        return False
-    elif current_date > nearest_date:
-        return False
-    else:
-        return True
+    global nearest_date
+    if nearest_date is None:
+        update_date()
+    print("comparing nearest_date = " + str(nearest_date))
+    print(type(nearest_date))
+    current_date = date.today()
+
+    print(type(current_date))
+    # compared
+    if nearest_date is not None:
+        print("Comparing dates")
+        if current_date < nearest_date:
+            return False
+        elif current_date > nearest_date:
+            return False
+        else:
+            return True
 
 
 def update_events(events):
@@ -115,15 +125,16 @@ def update_events(events):
                       f'FROM (VALUES {updated_values}) AS updated_event(ID, event_date) '
                       f'WHERE "Events"."ID" = updated_event.ID;')
         print(update_sql)
+        execute_query(update_sql)
 
     if len(deleted_events) > 0:
         deleted_events_str = ", ".join(map(str, deleted_events))
         delete_sql = (f'DELETE FROM "Events" '
                       f'WHERE "Events"."ID" IN ({deleted_events_str});')
         print(delete_sql)
+        execute_query(delete_sql)
 
-    execute_query(update_sql)
-    execute_query(delete_sql)
+
 
 
 

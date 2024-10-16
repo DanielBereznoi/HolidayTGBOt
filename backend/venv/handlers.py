@@ -14,10 +14,6 @@ bot = telebot.TeleBot(token=saved_token.token)
 
 current_transactions = {}
 
-neares_date = None
-
-event_service.update_date()
-
 
 def check_transaction_timeout():
     while True:
@@ -37,26 +33,33 @@ def delete_transactions(keys):
 
 def check_date():
     while True:
-        is_eventful_day = event_service.check_date()
+        print("Checking date...")
+        is_eventful_day = event_service.check_dates()
+        print(is_eventful_day)
         if is_eventful_day:
             events_for_today = event_service.get_events_by_today()
             for event in events_for_today:
                 bot.send_message(event[0], f'Don\'t forget about {event[2]}!')
-            event_service.upadate_events(events_for_today)
+            event_service.update_events(events_for_today)
         else:
             sleep(3600)
 
 
-t = threading.Thread(target=check_transaction_timeout)
+transaction_check_thread = threading.Thread(target=check_transaction_timeout)
+date_check_thread = threading.Thread(target=check_date)
 
-t.start()
+transaction_check_thread.start()
+date_check_thread.start()
 
 
 def validate_date(date_string):
     date_format = "%d.%m.%Y"
     try:
-        datetime.datetime.strptime(date_string, date_format)
-        return True
+        date = datetime.datetime.strptime(date_string, date_format)
+        if date > datetime.date.today():
+            return True
+        else:
+            return False
     except ValueError:
         return False
 
