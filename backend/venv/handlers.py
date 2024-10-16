@@ -73,15 +73,15 @@ def start(message):
 
 @bot.message_handler(commands=['addrepeatingevent'])
 def add_new_occasion(message):
-    bot.send_message(message.chat.id, "Insert Holiday name")
+    bot.send_message(message.chat.id, "Insert event name")
     current_transactions[message.chat.id] = [time.time(), True]
-    print("add new holiday")
+    print("Added the new event")
 
 
 @bot.message_handler(commands=['addevent'])
 def add_new_occasion(message):
-    bot.send_message(message.chat.id, "Insert Holiday name")
-    print("add new holiday")
+    bot.send_message(message.chat.id, "Insert your event name")
+    print("added the new event)")
     current_transactions[message.chat.id] = [time.time(), False]
 
 
@@ -92,7 +92,7 @@ def delete_holiday(message):
     for event in chat_events:
         markup.add(types.InlineKeyboardButton(text=f'{str(event[1])} - {str(event[2])}',
                                               callback_data=str(event[3])))
-    bot.reply_to(message, reply_markup=markup, text="Select event you want to delete")
+    bot.reply_to(message, reply_markup=markup, text="Select event what you want to delete")
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -138,7 +138,7 @@ def handle_replies(message):
                     succeeded = event_service.add_data_to_db(chat_id, halves[0], event_name,
                                                              current_transactions[chat_id][1])
                     if not succeeded:
-                        bot.reply_to(message, "Ti debil")
+                        bot.reply_to(message, "Something wrong")
                     else:
                         bot.reply_to(message, "Event added")
                     cancel(message)
