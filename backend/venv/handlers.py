@@ -118,6 +118,7 @@ def all_holidays(message):
 @bot.message_handler(commands=['cancel'])
 def cancel(message):
     current_transactions.pop(message.chat.id)
+    bot.reply_to(message, "Cancelled")
     print("cancel")
 
 
@@ -128,34 +129,37 @@ def stop(message):
 
 @bot.message_handler()
 def handle_replies(message):
-    message_text = message.text
-    if message_text not in ["/start", "/help", "/addevent", "/addrepeatingevent",
-                            "/deleteevent", "/allevents", "/cancel", "/stop"]:
-        chat_id = message.chat.id
-        if chat_id in current_transactions:
-            halves = message_text.split(" - ")
-            if len(halves) == 2:
-                valid_date = validate_date(halves[0])
-                event_name = halves[1]
-                if valid_date and len(event_name) <= 100:
-                    succeeded = event_service.add_data_to_db(chat_id, halves[0], event_name,
-                                                             current_transactions[chat_id][1])
-                    if not succeeded:
-                        bot.reply_to(message, "Something wrong")
+    if message.chat.id in current_transactions:
+        message_text = message.text
+        if message_text not in ["/start", "/help", "/addevent", "/addrepeatingevent",
+                                "/deleteevent", "/allevents", "/cancel", "/stop"]:
+            chat_id = message.chat.id
+            if chat_id in current_transactions:
+                halves = message_text.split(" - ")
+                if len(halves) == 2:
+                    valid_date = validate_date(halves[0])
+                    event_name = halves[1]
+                    if valid_date and len(event_name) <= 100:
+                        succeeded = event_service.add_data_to_db(chat_id, halves[0], event_name,
+                                                                 current_transactions[chat_id][1])
+                        if not succeeded:
+                            bot.reply_to(message, "Something wrong")
+                        else:
+                            bot.reply_to(message, "Event added")
+                        current_transactions.pop(message.chat.id)
                     else:
-                        bot.reply_to(message, "Event added")
-                    cancel(message)
+                        error_message = "Invalid input."
+                        if not valid_date:
+                            error_message = "Invalid date. Please use the format dd.MM.yyyy."
+                        if len(event_name) > 100:
+                            error_message = "Event name must be under 100 characters."
+                        bot.send_message(chat_id, error_message)
                 else:
-                    error_message = "Invalid input."
-                    if not valid_date:
-                        error_message = "Invalid date. Please use the format dd.MM.yyyy."
-                    if len(event_name) > 100:
-                        error_message = "Event name must be under 100 characters."
-                    bot.send_message(chat_id, error_message)
-            else:
-                bot.send_message(chat_id, "Invalid input format. Use 'dd.MM.yyyy - event name'.")
+                    bot.send_message(chat_id, "Invalid input format. Use 'dd.MM.yyyy - event name'.")
 
-    print(message.text)
+        print(message.text)
+    else:
+        bot.reply_to(message, "Please insert a valid command.")
 
 
 bot.polling(non_stop=True)
