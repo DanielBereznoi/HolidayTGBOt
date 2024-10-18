@@ -16,10 +16,11 @@ estonian_fixed_holidays = [
 # Русские праздники с фиксированными датами
 russian_fixed_holidays = [
     ("День Победы", datetime(1, 5, 9)),
+    ("День защитника Отечества", datetime(1, 2, 23)),
 ]
 
 # Функция для вычисления даты Пасхи
-def calcEasterDate(year):
+def calc_easter_date(year):
     a = year % 19
     b = year % 4
     c = year % 7
@@ -28,17 +29,17 @@ def calcEasterDate(year):
 
     # Специальные годы
     if year in [1954, 1981, 2049, 2076]:
-        dateofeaster = (22 + d + e) - 7
+        date_of_easter = (22 + d + e) - 7
     else:
-        dateofeaster = 22 + d + e
+        date_of_easter = 22 + d + e
 
-    return (4, dateofeaster - 31) if dateofeaster > 31 else (3, dateofeaster)
+    return (4, date_of_easter - 31) if date_of_easter > 31 else (3, date_of_easter)
 
 def get_floating_holidays(year):
     """Возвращает список плавающих праздников для данного года."""
-    easter_date = datetime(year, *calcEasterDate(year))
+    easter_date = datetime(year, *calc_easter_date(year))
     mother_date = datetime(year, 5, 1) + timedelta(days=(6 - datetime(year, 5, 1).weekday() + 7))
-    father_date = datetime(year, 6, 1) + timedelta(days=(6 - datetime(year, 6, 1).weekday() + 14))
+    father_date = datetime(year, 11, 1) + timedelta(days=(6 - datetime(year, 11, 1).weekday() + 14))
     
     return [
         ("Пасха", easter_date),
