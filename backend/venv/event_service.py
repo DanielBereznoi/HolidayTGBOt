@@ -30,7 +30,7 @@ def get_data_from_db():
         print("Нет данных в таблице.")
 
 
-def add_data_to_db(chat_ID, event_date, event_name, repeating):
+def add_data_to_db(chat_ID, event_date, hour, minute, event_name, repeating):
     """SQL-запрос добавления данных с новым столбцом"""
     # Проверяем, существует ли уже запись с таким chat_ID, event_date и event_name
     if check_record_exists(chat_ID, event_date, event_name):
