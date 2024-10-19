@@ -4,8 +4,6 @@ from itertools import chain
 
 from time import sleep
 from collections import defaultdict
-import telegram
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 import telebot
 from six import print_
 from telebot import types
@@ -79,6 +77,8 @@ def start(message):
 
 @bot.message_handler(commands=['addevent'])
 def add_new_occasion(message):
+    print(message)
+    print(message.chat.id)
     bot.send_message(message.chat.id, "Insert the date of the event. Please use the format DD.MM.YYYY.")
     current_transactions[message.chat.id] = [time.time(), True]
 

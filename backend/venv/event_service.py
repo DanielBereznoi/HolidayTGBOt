@@ -5,7 +5,7 @@ from collections import defaultdict
 import time
 
 nearest_date = None
-
+user_blacklist = []
 
 def execute_query(query, params=None):
     """Optimisation"""
@@ -145,23 +145,27 @@ user_activity = defaultdict(lambda: {'messages': 0, 'last_activity': 0})
 
 # Функция для проверки, есть ли пользователь в черном списке
 def is_blacklisted(user_id):
-    with get_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT 1 FROM blacklist WHERE chat_id = %s", (user_id,))
-            return cursor.fetchone() is not None
+    return user_id in user_blacklist
+
+def fetch_blacklist():
+    global user_blacklist
+    user_blacklist = execute_query('SELECT chat_id FROM blacklist')
+
 
 # Функция для добавления пользователя в черный список
 def add_to_blacklist(user_id):
-    with get_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute("INSERT INTO blacklist (chat_id) VALUES (%s) ON CONFLICT (chat_id) DO NOTHING", (user_id,))
-            conn.commit()
+    if user_id not in user_blacklist:
+        user_blacklist.append(user_id)
+        execute_query('INSERT INTO blacklist (chat_id) VALUES (%s)', user_id)
+
 
 # Функция для отправки уведомления администратору
 def notify_admin(context, user_id):
     admin_chat_id = '5167789151'
+    admin_chat_id1 = '466698059'
     message = f"Пользователь {user_id} был заблокирован за спам."
     context.bot.send_message(chat_id=admin_chat_id, text=message)
+    context.bot.send_message(chat_id=admin_chat_id1, text=message)
 
 
 # Обработка входящих сообщений
