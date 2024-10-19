@@ -1,4 +1,7 @@
 from contextlib import suppress
+from idlelib.configdialog import tracers
+from itertools import chain
+
 from time import sleep
 
 import telebot
@@ -21,7 +24,7 @@ def check_transaction_timeout():
     while True:
         print("Checking transaction timeout...")
         # Directly remove timed-out transactions
-        keys_to_remove = [key for key, value in current_transactions.items() if value[0] + 4 * 60 <= time.time()]
+        keys_to_remove = [key for key, value in current_transactions.items() if value[0] + 1 * 60 <= time.time()]
         delete_transactions(keys_to_remove)
         time.sleep(10)
 
@@ -72,17 +75,19 @@ def start(message):
     print(message)
 
 
-@bot.message_handler(commands=['addrepeatingevent'])
-def add_new_occasion(message):
-    bot.send_message(message.chat.id, "Insert event name")
-    current_transactions[message.chat.id] = [time.time(), True]
-    print("Added the new event")
-
-
 @bot.message_handler(commands=['addevent'])
 def add_new_occasion(message):
     bot.send_message(message.chat.id, "Insert the date of the event. Please use the format DD.MM.YYYY.")
-    current_transactions[message.chat.id] = [time.time()]
+    current_transactions[message.chat.id] = [time.time(), True]
+
+
+@bot.message_handler(commands=['addeventinline'])
+def add_new_inline_event(message):  # Message format: DD.MM.YYYY - HH:mm - Event name - repeating
+    # list = "11.12.2024 - 12:20 - vaike valge vene Pede posi - Y".split(" - ")
+    current_transactions[message.chat.id] = [time.time(), False]
+    bot.send_message(message.chat.id, "Please insert the event description in one line. \n"
+                                      "Please use format: DD.MM.YYYY - HH:mm - Event name - Repeating(y/n).\n"
+                                      "Repeating means that event would repeat yearly.")
 
 
 @bot.message_handler(commands=['deleteevent'])
@@ -127,45 +132,6 @@ def stop(message):
     print("stop")
 
 
-# @bot.message_handler()
-# def handle_replies(message):
-#    if message.chat.id in current_transactions:
-#        message_text = message.text
-#        if message_text not in ["/start", "/help", "/addevent", "/addrepeatingevent",
-#                                "/deleteevent", "/allevents", "/cancel", "/stop"]:
-#            chat_id = message.chat.id
-#            if chat_id in current_transactions:
-#                halves = message_text.split(" - ")
-#                if len(halves) == 2:
-#                    valid_date = validate_date(halves[0])
-#                    event_name = halves[1]
-#                    if valid_date and len(event_name) <= 100:
-#                        succeeded = event_service.add_data_to_db(chat_id, halves[0], event_name,
-#                                                                 current_transactions[chat_id][1])
-#                        if not succeeded:
-#                            bot.reply_to(message, "Something wrong")
-#                        else:
-#                            bot.reply_to(message, "Event added")
-#                        current_transactions.pop(message.chat.id)
-#                    else:
-#                        error_message = "Invalid input."
-#                        if not valid_date:
-#                            error_message = "Invalid date. Please use the format dd.MM.yyyy."
-#                        if len(event_name) > 100:
-#                            error_message = "Event name must be under 100 characters."
-#                        bot.send_message(chat_id, error_message)
-#                else:
-#                    bot.send_message(chat_id, "Invalid input format. Use 'dd.MM.yyyy - event name'.")
-#
-#        print(message.text)
-#    else:
-#        bot.reply_to(message, "Please insert a valid command.")
-
-
-# transaction format {
-# chat_id: [date, hour, minutes, name, repeating]
-# }
-
 @bot.message_handler()
 def handle_replies(message):
     command_list = ["start", "stop", "addevent", "deleteevent", "addholiday", "allevents", "help", "menu"]
@@ -178,51 +144,82 @@ def handle_replies(message):
 
     if chat_id in current_transactions:
         transaction = current_transactions[chat_id]
-        transaction_phase = len(transaction)
-
-        if transaction_phase == 1:  # Adding date
-            if validate_date(message_text):
-                transaction.append(message_text)
-                bot.send_message(chat_id, "Next, please insert the hour (24h format) when the event would happen.")
-            else:
-                react_to_invalid_transaction_reply(message, transaction_phase)
-
-        elif transaction_phase == 2:  # Adding hour
-            if is_valid_time_range(message_text, 0, 24):
-                transaction.append(message_text)
-                bot.send_message(chat_id, "Next, please insert the minute when the event would happen.")
-            else:
-                react_to_invalid_transaction_reply(message, transaction_phase)
-
-        elif transaction_phase == 3:  # Adding minute
-            if is_valid_time_range(message_text, 0, 60):
-                transaction.append(message_text)
-                bot.send_message(chat_id, "Next, please insert the event name.")
-            else:
-                react_to_invalid_transaction_reply(message, transaction_phase)
-
-        elif transaction_phase == 4:  # Adding event name
-            if is_valid_event_name(message_text):
-                transaction.append(message_text)
-                bot.send_message(chat_id, "Next, specify if the event would be repeating yearly (true/false).")
-            else:
-                react_to_invalid_transaction_reply(message, transaction_phase)
-
-        elif transaction_phase == 5:  # Adding repeating flag
-            repeating_flag = message_text.lower()
-            if repeating_flag in ["true", "false"]:
-                start, date, hour, minute, name = transaction
-                repeating = repeating_flag == "true"
-                saved = event_service.add_data_to_db(chat_id, date, hour, minute, name, repeating)
-                if saved:
-                    bot.send_message(chat_id, f"Event added - {date} {hour}:{minute} {name}, repeating: {repeating}")
-                else:
-                    bot.send_message(chat_id, "Event not saved. Please try again later.")
-                current_transactions.pop(chat_id)
-            else:
-                react_to_invalid_transaction_reply(message, transaction_phase)
+        if transaction[1] is True:  # Is multi-step transaction
+            proccess_multistep_transaction(message, message_text, chat_id, transaction)
+        elif transaction[1] is False:
+            process_inline_transaction(message, message_text, chat_id)
     else:
         bot.reply_to(message, "Please insert a valid command. To get a list of possible commands insert '/help'")
+
+
+def process_inline_transaction(message, message_text, chat_id):  # Format: []
+    elements = message_text.split(" - ")
+    is_valid_date = validate_date(elements[0])
+    hour = elements[1].split(":")[0]
+    is_hour_valid = is_valid_time_range(hour, 0, 24)
+    minute = elements[1].split(":")[1]
+    is_minute_valid = is_valid_time_range(hour, 0, 60)
+    repeating_flag_valid = elements[3].lower() in ["yes", "y", "no", "n", "true", "false"]
+    name_valid = is_valid_event_name(elements[2])
+    if name_valid and is_valid_date and is_hour_valid and is_minute_valid:
+        repeating = elements[3].lower() in ["yes", "y", "true"]
+        saved = event_service.add_data_to_db(chat_id, elements[0], hour, minute, elements[2], repeating)
+        if saved:
+            bot.send_message(chat_id, f"Event added - {elements[0]} {hour}:{minute} {elements[2]}, "
+                                      f"repeating: {repeating}")
+        else:
+            bot.send_message(chat_id, "Event not saved. Please try again later.")
+
+        current_transactions.pop(chat_id)
+    else:
+        bot.reply_to(message, "Invalid inserted message. Please use format: DD.MM.YYYY - HH:mm - "
+                              "Event name - Repeating(y/n)")
+
+
+def proccess_multistep_transaction(message, message_text, chat_id, transaction):
+    transaction = current_transactions[chat_id]
+    transaction_phase = len(transaction)
+    if transaction_phase == 2:  # Adding date
+        if validate_date(message_text):
+            transaction.append(message_text)
+            bot.send_message(chat_id, "Next, please insert the hour (24h format) when the event would happen.")
+        else:
+            react_to_invalid_transaction_reply(message, transaction_phase)
+
+    elif transaction_phase == 3:  # Adding hour
+        if is_valid_time_range(message_text, 0, 24):
+            transaction.append(message_text)
+            bot.send_message(chat_id, "Next, please insert the minute when the event would happen.")
+        else:
+            react_to_invalid_transaction_reply(message, transaction_phase)
+
+    elif transaction_phase == 4:  # Adding minute
+        if is_valid_time_range(message_text, 0, 60):
+            transaction.append(message_text)
+            bot.send_message(chat_id, "Next, please insert the event name.")
+        else:
+            react_to_invalid_transaction_reply(message, transaction_phase)
+
+    elif transaction_phase == 5:  # Adding event name
+        if is_valid_event_name(message_text):
+            transaction.append(message_text)
+            bot.send_message(chat_id, "Next, specify if the event would be repeating yearly (true/false).")
+        else:
+            react_to_invalid_transaction_reply(message, transaction_phase)
+
+    elif transaction_phase == 6:  # Adding repeating flag
+        repeating_flag = message_text.lower()
+        if repeating_flag in ["true", "false"]:
+            _, _, date, hour, minute, name = transaction
+            repeating = repeating_flag == "true"
+            saved = event_service.add_data_to_db(chat_id, date, hour, minute, name, repeating)
+            if saved:
+                bot.send_message(chat_id, f"Event added - {date} {hour}:{minute} {name}, repeating: {repeating}")
+            else:
+                bot.send_message(chat_id, "Event not saved. Please try again later.")
+            current_transactions.pop(chat_id)
+        else:
+            react_to_invalid_transaction_reply(message, transaction_phase)
 
 
 def is_valid_time_range(value, min_val, max_val):
@@ -235,11 +232,11 @@ def is_valid_event_name(name):
 
 def react_to_invalid_transaction_reply(message, phase):
     switcher = {
-        1: "Invalid date. Please use the format DD.MM.YYYY.",
-        2: "Invalid value inserted. Please insert numberical value from 0-23.",
-        3: "Invalid value inserted. Please insert numberical value from 0-59.",
-        4: "Please make sure that name is under 100 characters and that no special characters are used.",
-        5: "Please insert values 'true' or 'false'"
+        2: "Invalid date. Please use the format DD.MM.YYYY.",
+        3: "Invalid value inserted. Please insert numberical value from 0-23.",
+        4: "Invalid value inserted. Please insert numberical value from 0-59.",
+        5: "Please make sure that name is under 100 characters and that no special characters are used.",
+        6: "Please insert values 'true' or 'false'"
     }
     bot.reply_to(message, switcher[phase])
 
