@@ -204,19 +204,6 @@ def handle_message(update, context):
     # Ответ на сообщение
     context.bot.reply_to(chat_id=update.effective_chat.id, text="Сообщение принято!")
 
-# # Основной обработчик
-# def main():
-#     updater = Updater(TOKEN, use_context=True)
-#     dp = updater.dispatcher
-
-#     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
-
-#     updater.start_polling()
-#     updater.idle()
-
-
-
-
 # Вызов функции для получения данных
 if __name__ == "__main__":
     import datetime
