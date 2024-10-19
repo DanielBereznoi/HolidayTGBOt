@@ -33,7 +33,8 @@ def get_data_from_db():
 def add_data_to_db(chat_ID, event_date, hour, minute, event_name, repeating):
     """SQL-запрос добавления данных с новым столбцом"""
     # Проверяем, существует ли уже запись с таким chat_ID, event_timestamp и event_name
-    event_timestamp = datetime.combine(event_date, datetime.min.time()) + timedelta(hours=hour, minutes=minute)
+    event_date = datetime.strptime(event_date, '%d.%m.%Y').date()
+    event_timestamp = datetime.combine(event_date, datetime.min.time()) + timedelta(hours=int(hour), minutes=int(minute))
     
     if check_record_exists(chat_ID, event_timestamp, event_name):
         print("Ошибка: запись уже существует.")
@@ -91,11 +92,8 @@ def check_dates():
     global nearest_date
     if nearest_date is None:
         update_date()
-    print("comparing nearest_date = " + str(nearest_date))
-    print(type(nearest_date))
-    current_date = date.today()
+    current_date = datetime.today()
 
-    print(type(current_date))
     # compared
     if nearest_date is not None:
         print("Comparing dates")
@@ -126,14 +124,12 @@ def update_events(events):
                       f'SET "event_timestamp" = updated_event.event_timestamp '
                       f'FROM (VALUES {updated_values}) AS updated_event(ID, event_timestamp) '
                       f'WHERE "Events"."ID" = updated_event.ID;')
-        print(update_sql)
         execute_query(update_sql)
 
     if len(deleted_events) > 0:
         deleted_events_str = ", ".join(map(str, deleted_events))
         delete_sql = (f'DELETE FROM "Events" '
                       f'WHERE "Events"."ID" IN ({deleted_events_str});')
-        print(delete_sql)
         execute_query(delete_sql)
 
 

@@ -9,9 +9,11 @@ from datetime import date, datetime
 import event_service
 import saved_token
 import threading
+import re
 
 bot = telebot.TeleBot(token=saved_token.token)
 
+special_char_pattern = re.compile(r'[@_!#$%^&*()<>?/\|}{~:]')
 current_transactions = {}
 
 
@@ -19,7 +21,7 @@ def check_transaction_timeout():
     while True:
         print("Checking transaction timeout...")
         # Directly remove timed-out transactions
-        keys_to_remove = [key for key, value in current_transactions.items() if value[0] + 2 * 60 <= time.time()]
+        keys_to_remove = [key for key, value in current_transactions.items() if value[0] + 4 * 60 <= time.time()]
         delete_transactions(keys_to_remove)
         time.sleep(10)
 
@@ -36,7 +38,6 @@ def check_date():
     while True:
         print("Checking date...")
         is_eventful_day = event_service.check_dates()
-        print(is_eventful_day)
         if is_eventful_day:
             events_for_today = event_service.get_events_by_today()
             for event in events_for_today:
@@ -80,9 +81,8 @@ def add_new_occasion(message):
 
 @bot.message_handler(commands=['addevent'])
 def add_new_occasion(message):
-    bot.send_message(message.chat.id, "Insert your event name")
-    print("added the new event)")
-    current_transactions[message.chat.id] = [time.time(), False]
+    bot.send_message(message.chat.id, "Insert the date of the event. Please use the format DD.MM.YYYY.")
+    current_transactions[message.chat.id] = [time.time()]
 
 
 @bot.message_handler(commands=['deleteevent'])
@@ -127,39 +127,121 @@ def stop(message):
     print("stop")
 
 
+# @bot.message_handler()
+# def handle_replies(message):
+#    if message.chat.id in current_transactions:
+#        message_text = message.text
+#        if message_text not in ["/start", "/help", "/addevent", "/addrepeatingevent",
+#                                "/deleteevent", "/allevents", "/cancel", "/stop"]:
+#            chat_id = message.chat.id
+#            if chat_id in current_transactions:
+#                halves = message_text.split(" - ")
+#                if len(halves) == 2:
+#                    valid_date = validate_date(halves[0])
+#                    event_name = halves[1]
+#                    if valid_date and len(event_name) <= 100:
+#                        succeeded = event_service.add_data_to_db(chat_id, halves[0], event_name,
+#                                                                 current_transactions[chat_id][1])
+#                        if not succeeded:
+#                            bot.reply_to(message, "Something wrong")
+#                        else:
+#                            bot.reply_to(message, "Event added")
+#                        current_transactions.pop(message.chat.id)
+#                    else:
+#                        error_message = "Invalid input."
+#                        if not valid_date:
+#                            error_message = "Invalid date. Please use the format dd.MM.yyyy."
+#                        if len(event_name) > 100:
+#                            error_message = "Event name must be under 100 characters."
+#                        bot.send_message(chat_id, error_message)
+#                else:
+#                    bot.send_message(chat_id, "Invalid input format. Use 'dd.MM.yyyy - event name'.")
+#
+#        print(message.text)
+#    else:
+#        bot.reply_to(message, "Please insert a valid command.")
+
+
+# transaction format {
+# chat_id: [date, hour, minutes, name, repeating]
+# }
+
 @bot.message_handler()
 def handle_replies(message):
-    if message.chat.id in current_transactions:
-        message_text = message.text
-        if message_text not in ["/start", "/help", "/addevent", "/addrepeatingevent",
-                                "/deleteevent", "/allevents", "/cancel", "/stop"]:
-            chat_id = message.chat.id
-            if chat_id in current_transactions:
-                halves = message_text.split(" - ")
-                if len(halves) == 2:
-                    valid_date = validate_date(halves[0])
-                    event_name = halves[1]
-                    if valid_date and len(event_name) <= 100:
-                        succeeded = event_service.add_data_to_db(chat_id, halves[0], event_name,
-                                                                 current_transactions[chat_id][1])
-                        if not succeeded:
-                            bot.reply_to(message, "Something wrong")
-                        else:
-                            bot.reply_to(message, "Event added")
-                        current_transactions.pop(message.chat.id)
-                    else:
-                        error_message = "Invalid input."
-                        if not valid_date:
-                            error_message = "Invalid date. Please use the format dd.MM.yyyy."
-                        if len(event_name) > 100:
-                            error_message = "Event name must be under 100 characters."
-                        bot.send_message(chat_id, error_message)
-                else:
-                    bot.send_message(chat_id, "Invalid input format. Use 'dd.MM.yyyy - event name'.")
+    command_list = ["start", "stop", "addevent", "deleteevent", "addholiday", "allevents", "help", "menu"]
+    message_text = message.text
+    chat_id = message.chat.id
 
-        print(message.text)
+    # If it's a command, return early
+    if message_text in command_list:
+        return
+
+    if chat_id in current_transactions:
+        transaction = current_transactions[chat_id]
+        transaction_phase = len(transaction)
+
+        if transaction_phase == 1:  # Adding date
+            if validate_date(message_text):
+                transaction.append(message_text)
+                bot.send_message(chat_id, "Next, please insert the hour (24h format) when the event would happen.")
+            else:
+                react_to_invalid_transaction_reply(message, transaction_phase)
+
+        elif transaction_phase == 2:  # Adding hour
+            if is_valid_time_range(message_text, 0, 24):
+                transaction.append(message_text)
+                bot.send_message(chat_id, "Next, please insert the minute when the event would happen.")
+            else:
+                react_to_invalid_transaction_reply(message, transaction_phase)
+
+        elif transaction_phase == 3:  # Adding minute
+            if is_valid_time_range(message_text, 0, 60):
+                transaction.append(message_text)
+                bot.send_message(chat_id, "Next, please insert the event name.")
+            else:
+                react_to_invalid_transaction_reply(message, transaction_phase)
+
+        elif transaction_phase == 4:  # Adding event name
+            if is_valid_event_name(message_text):
+                transaction.append(message_text)
+                bot.send_message(chat_id, "Next, specify if the event would be repeating yearly (true/false).")
+            else:
+                react_to_invalid_transaction_reply(message, transaction_phase)
+
+        elif transaction_phase == 5:  # Adding repeating flag
+            repeating_flag = message_text.lower()
+            if repeating_flag in ["true", "false"]:
+                start, date, hour, minute, name = transaction
+                repeating = repeating_flag == "true"
+                saved = event_service.add_data_to_db(chat_id, date, hour, minute, name, repeating)
+                if saved:
+                    bot.send_message(chat_id, f"Event added - {date} {hour}:{minute} {name}, repeating: {repeating}")
+                else:
+                    bot.send_message(chat_id, "Event not saved. Please try again later.")
+                current_transactions.pop(chat_id)
+            else:
+                react_to_invalid_transaction_reply(message, transaction_phase)
     else:
-        bot.reply_to(message, "Please insert a valid command.")
+        bot.reply_to(message, "Please insert a valid command. To get a list of possible commands insert '/help'")
+
+
+def is_valid_time_range(value, min_val, max_val):
+    return value.isdigit() and min_val <= int(value) < max_val
+
+
+def is_valid_event_name(name):
+    return len(name) <= 100 and special_char_pattern.search(name) is None
+
+
+def react_to_invalid_transaction_reply(message, phase):
+    switcher = {
+        1: "Invalid date. Please use the format DD.MM.YYYY.",
+        2: "Invalid value inserted. Please insert numberical value from 0-23.",
+        3: "Invalid value inserted. Please insert numberical value from 0-59.",
+        4: "Please make sure that name is under 100 characters and that no special characters are used.",
+        5: "Please insert values 'true' or 'false'"
+    }
+    bot.reply_to(message, switcher[phase])
 
 
 bot.polling(non_stop=True)
