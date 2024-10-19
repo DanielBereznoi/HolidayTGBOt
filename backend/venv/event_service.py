@@ -1,6 +1,8 @@
 import psycopg2
 from db_connection import get_connection
 from datetime import datetime, timedelta, date
+from collections import defaultdict
+import time
 
 nearest_date = None
 
@@ -132,6 +134,81 @@ def update_events(events):
                       f'WHERE "Events"."ID" IN ({deleted_events_str});')
         execute_query(delete_sql)
 
+
+
+
+
+# Словари для отслеживания сообщений и активности
+message_count = defaultdict(int)
+last_message_time = defaultdict(float)
+user_activity = defaultdict(lambda: {'messages': 0, 'last_activity': 0})
+
+# Функция для проверки, есть ли пользователь в черном списке
+def is_blacklisted(user_id):
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT 1 FROM blacklist WHERE chat_id = %s", (user_id,))
+            return cursor.fetchone() is not None
+
+# Функция для добавления пользователя в черный список
+def add_to_blacklist(user_id):
+    with get_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute("INSERT INTO blacklist (chat_id) VALUES (%s) ON CONFLICT (chat_id) DO NOTHING", (user_id,))
+            conn.commit()
+
+# Функция для отправки уведомления администратору
+def notify_admin(context, user_id):
+    admin_chat_id = '5167789151'
+    message = f"Пользователь {user_id} был заблокирован за спам."
+    context.bot.send_message(chat_id=admin_chat_id, text=message)
+
+
+# Обработка входящих сообщений
+def handle_message(update, context):
+    user_id = update.message.from_user.id
+
+    # Проверка на наличие в черном списке
+    if is_blacklisted(user_id):
+        context.bot.reply_to(chat_id=update.effective_chat.id, text="Вы заблокированы, обратитесь к создателям этого шедевра")
+        return
+
+    # Установка текущего времени
+    current_time = time.time()
+
+    # Проверка лимитов на сообщения
+    if current_time - last_message_time[user_id] < 60:  # 60 секунд
+        message_count[user_id] += 1
+    else:
+        message_count[user_id] = 1  # Сброс счетчика после 60 секунд
+        last_message_time[user_id] = current_time
+
+    # Отслеживание активности
+    user_activity[user_id]['messages'] += 1
+    user_activity[user_id]['last_activity'] = current_time
+
+    if message_count[user_id] > 20:  # Лимит на 20 сообщений в минуту
+        context.bot.reply_to(chat_id=update.effective_chat.id, text="Вы превысили лимит сообщений. Пожалуйста, подождите.")
+        return
+
+    if user_activity[user_id]['messages'] > 20:  # Лимит на 20 сообщений
+        add_to_blacklist(user_id)  # Добавление в черный список
+        notify_admin(user_id)  # Уведомление администраторов
+        context.bot.reply_to(chat_id=update.effective_chat.id, text="Вы были заблокированы за спам, обратитесь к создателям этого шедевра")
+        return
+
+    # Ответ на сообщение
+    context.bot.reply_to(chat_id=update.effective_chat.id, text="Сообщение принято!")
+
+# # Основной обработчик
+# def main():
+#     updater = Updater(TOKEN, use_context=True)
+#     dp = updater.dispatcher
+
+#     dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+
+#     updater.start_polling()
+#     updater.idle()
 
 
 
