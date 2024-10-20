@@ -184,35 +184,29 @@ def proccess_multistep_transaction(message, message_text, chat_id, transaction):
     if transaction_phase == 2:  # Adding date
         if validate_date(message_text):
             transaction.append(message_text)
-            bot.send_message(chat_id, "Next, please insert the hour (24h format) when the event would happen.")
+            bot.send_message(chat_id, "Next, please insert the time (24h format) when the event would happen.")
         else:
             react_to_invalid_transaction_reply(message, transaction_phase)
 
-    elif transaction_phase == 3:  # Adding hour
-        if is_valid_time_range(message_text, 0, 24):
-            transaction.append(message_text)
-            bot.send_message(chat_id, "Next, please insert the minute when the event would happen.")
-        else:
-            react_to_invalid_transaction_reply(message, transaction_phase)
-
-    elif transaction_phase == 4:  # Adding minute
-        if is_valid_time_range(message_text, 0, 60):
+    elif transaction_phase == 3:  # Adding time
+        hour, min = message_text.split(":")
+        if is_valid_time_range(hour, 0, 24) and is_valid_time_range(min, 0, 60):
             transaction.append(message_text)
             bot.send_message(chat_id, "Next, please insert the event name.")
         else:
             react_to_invalid_transaction_reply(message, transaction_phase)
-
-    elif transaction_phase == 5:  # Adding event name
+    elif transaction_phase == 4:  # Adding event name
         if is_valid_event_name(message_text):
             transaction.append(message_text)
             bot.send_message(chat_id, "Next, specify if the event would be repeating yearly (true/false).")
         else:
             react_to_invalid_transaction_reply(message, transaction_phase)
 
-    elif transaction_phase == 6:  # Adding repeating flag
+    elif transaction_phase == 5:  # Adding repeating flag
         repeating_flag = message_text.lower()
         if repeating_flag in ["true", "false"]:
-            _, _, date, hour, minute, name = transaction
+            _, _, date, time, name = transaction
+            hour, minute = time.split(":")
             repeating = repeating_flag == "true"
             saved = event_service.add_data_to_db(chat_id, date, hour, minute, name, repeating)
             if saved:
@@ -235,10 +229,9 @@ def is_valid_event_name(name):
 def react_to_invalid_transaction_reply(message, phase):
     switcher = {
         2: "Invalid date. Please use the format DD.MM.YYYY.",
-        3: "Invalid value inserted. Please insert numberical value from 0-23.",
-        4: "Invalid value inserted. Please insert numberical value from 0-59.",
-        5: "Please make sure that name is under 100 characters and that no special characters are used.",
-        6: "Please insert values 'true' or 'false'"
+        3: "Invalid value inserted. Pleas use format HH:MM, where HH is in range of 0-23 and MM in range of 0-59.",
+        4: "Please make sure that name is under 100 characters and that no special characters are used.",
+        5: "Please insert values 'true' or 'false'"
     }
     bot.reply_to(message, switcher[phase])
 
