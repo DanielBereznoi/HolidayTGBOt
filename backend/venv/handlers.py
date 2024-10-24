@@ -156,6 +156,9 @@ def handle_replies(message):
 
 def process_inline_transaction(message, message_text, chat_id):  # Format: []
     elements = message_text.split(" - ")
+    if len(elements) != 4:
+        bot.reply_to(message, "Invalid inserted message. Please use format: DD.MM.YYYY - HH:mm - "
+                              "Event name - Repeating(y/n)")
     is_valid_date = validate_date(elements[0])
     hour = elements[1].split(":")[0]
     is_hour_valid = is_valid_time_range(hour, 0, 24)
