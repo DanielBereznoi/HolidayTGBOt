@@ -1,14 +1,8 @@
-from contextlib import suppress
-from idlelib.configdialog import tracers
-from itertools import chain
-
 from time import sleep
-from collections import defaultdict
 import telebot
-from six import print_
 from telebot import types
 import time
-from datetime import date, datetime
+from datetime import datetime
 import event_service
 import saved_token
 import threading
@@ -16,7 +10,7 @@ import re
 
 bot = telebot.TeleBot(token=saved_token.token)
 
-special_char_pattern = re.compile(r'[@_!#$%^&*()<>?/\|}{~:]')
+special_char_pattern = re.compile(r'[@_!#$%^&*()<>?/|}{~:]')
 current_transactions = {}
 
 
