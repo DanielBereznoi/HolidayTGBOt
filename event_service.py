@@ -1,5 +1,5 @@
 import psycopg2
-from saved_token import get_connection
+import database
 from datetime import datetime, timedelta
 from collections import defaultdict
 import time
@@ -10,7 +10,7 @@ user_blacklist = []
 def execute_query(query, params=None):
     """Optimisation"""
     try:
-        with get_connection() as conn:
+        with database.get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute(query, params)
                 if query.strip().lower().startswith('select'):

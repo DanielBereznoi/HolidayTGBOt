@@ -4,11 +4,15 @@ from telebot import types
 import time
 from datetime import datetime
 import event_service
-import saved_token
 import threading
 import re
 
-bot = telebot.TeleBot(token=saved_token.token)
+import secret_parser
+
+secret_parser.parse_secret()
+event_service.update_date()
+
+bot = telebot.TeleBot(token=secret_parser.bot_token)
 
 special_char_pattern = re.compile(r'[@_!#$%^&*()<>?/|}{~:]')
 current_transactions = {}
@@ -118,9 +122,12 @@ def all_holidays(message):
 
 @bot.message_handler(commands=['cancel'])
 def cancel(message):
-    current_transactions.pop(message.chat.id)
-    bot.reply_to(message, "Cancelled")
-    print("cancel")
+    if message.chat.id in current_transactions:
+        current_transactions.pop(message.chat.id)
+        bot.reply_to(message, "Transaction cancelled")
+        print("cancel")
+    else:
+        handle_replies(message)
 
 
 @bot.message_handler(commands=['stop'])
@@ -145,6 +152,8 @@ def handle_replies(message):
         elif transaction[1] is False:
             process_inline_transaction(message, message_text, chat_id)
     else:
+        if message_text == "cancel":
+            bot.reply_to(message, "No transaction to cancel")
         bot.reply_to(message, "Please insert a valid command. To get a list of possible commands insert '/help'")
 
 
@@ -153,26 +162,27 @@ def process_inline_transaction(message, message_text, chat_id):  # Format: []
     if len(elements) != 4:
         bot.reply_to(message, "Invalid inserted message. Please use format: DD.MM.YYYY - HH:mm - "
                               "Event name - Repeating(y/n)")
-    is_valid_date = validate_date(elements[0])
-    hour = elements[1].split(":")[0]
-    is_hour_valid = is_valid_time_range(hour, 0, 24)
-    minute = elements[1].split(":")[1]
-    is_minute_valid = is_valid_time_range(hour, 0, 60)
-    repeating_flag_valid = elements[3].lower() in ["yes", "y", "no", "n", "true", "false"]
-    name_valid = is_valid_event_name(elements[2])
-    if name_valid and is_valid_date and is_hour_valid and is_minute_valid:
-        repeating = elements[3].lower() in ["yes", "y", "true"]
-        saved = event_service.add_data_to_db(chat_id, elements[0], hour, minute, elements[2], repeating)
-        if saved:
-            bot.send_message(chat_id, f"Event added - {elements[0]} {hour}:{minute} {elements[2]}, "
-                                      f"repeating: {repeating}")
-        else:
-            bot.send_message(chat_id, "Event not saved. Please try again later.")
-
-        current_transactions.pop(chat_id)
     else:
-        bot.reply_to(message, "Invalid inserted message. Please use format: DD.MM.YYYY - HH:mm - "
-                              "Event name - Repeating(y/n)")
+        is_valid_date = validate_date(elements[0])
+        hour = elements[1].split(":")[0]
+        is_hour_valid = is_valid_time_range(hour, 0, 24)
+        minute = elements[1].split(":")[1]
+        is_minute_valid = is_valid_time_range(hour, 0, 60)
+        repeating_flag_valid = elements[3].lower() in ["yes", "y", "no", "n", "true", "false"]
+        name_valid = is_valid_event_name(elements[2])
+        if name_valid and is_valid_date and is_hour_valid and is_minute_valid:
+            repeating = elements[3].lower() in ["yes", "y", "true"]
+            saved = event_service.add_data_to_db(chat_id, elements[0], hour, minute, elements[2], repeating)
+            if saved:
+                bot.send_message(chat_id, f"Event added - {elements[0]} {hour}:{minute} {elements[2]}, "
+                                          f"repeating: {repeating}")
+            else:
+                bot.send_message(chat_id, "Event not saved. Please try again later.")
+
+            current_transactions.pop(chat_id)
+        else:
+            bot.reply_to(message, "Invalid inserted message. Please use format: DD.MM.YYYY - HH:mm - "
+                                  "Event name - Repeating(y/n)")
 
 
 def proccess_multistep_transaction(message, message_text, chat_id, transaction):
