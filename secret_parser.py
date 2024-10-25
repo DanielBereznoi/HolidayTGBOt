@@ -9,7 +9,7 @@ db_name = None
 if platform.system() == 'Windows':
     path_to_secret = "../secret.json"
 else:
-    path_to_secret = "./secret.json"
+    path_to_secret = "/home/dabere/projects/betterfriend/env/secret.json"
 
 def parse_secret():
     global bot_token, db_username, db_password, db_name
