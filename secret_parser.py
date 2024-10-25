@@ -1,11 +1,15 @@
 import json
+import platform
 
 bot_token = None
 db_username = None
 db_password = None
 db_name = None
 
-path_to_secret = "../secret.json"
+if platform.system() == 'Windows':
+    path_to_secret = "../secret.json"
+else:
+    path_to_secret = "./secret.json"
 
 def parse_secret():
     global bot_token, db_username, db_password, db_name
