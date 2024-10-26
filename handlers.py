@@ -149,7 +149,7 @@ def handle_replies(message):
         transaction = current_transactions[chat_id]
         if transaction[1] is True:  # Is multi-step transaction
             update_transaction_timeout(chat_id)
-            proccess_multistep_transaction(message, message_text, chat_id, transaction)
+            process_multistep_transaction(message, message_text, chat_id, transaction)
         elif transaction[1] is False:
             update_transaction_timeout(chat_id)
             process_inline_transaction(message, message_text, chat_id)
@@ -193,7 +193,7 @@ def update_transaction_timeout(chat_id):
 
 
 
-def proccess_multistep_transaction(message, message_text, chat_id, transaction):
+def process_multistep_transaction(message, message_text, chat_id, transaction):
     transaction = current_transactions[chat_id]
     transaction_phase = len(transaction)
     if transaction_phase == 2:  # Adding date
