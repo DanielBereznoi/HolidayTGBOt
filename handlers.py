@@ -22,7 +22,7 @@ current_transactions = {}
 
 def check_transaction_timeout():
     while True:
-        print("Checking transaction timeout...")
+        log(1, "Checking transaction timeout...")
         # Directly remove timed-out transactions
         keys_to_remove = [key for key, value in current_transactions.items() if value[0] + 1 * 60 <= time.time()]
         delete_transactions(keys_to_remove)
@@ -32,14 +32,14 @@ def check_transaction_timeout():
 def delete_transactions(keys):
     for key in keys:
         if key in current_transactions:
-            print('Deleting transactions...')
+            log(1, "'Deleting transactions...'")
             bot.send_message(key, "Transaction timed out")
             current_transactions.pop(key, None)  # Use pop with default to avoid errors
 
 
 def check_date():
     while True:
-        print("Checking date...")
+        log(1, "Checking date...")
         is_eventful_day = event_service.check_dates()
         if is_eventful_day:
             events_for_today = event_service.get_events_by_today()
@@ -125,14 +125,14 @@ def cancel(message):
     if message.chat.id in current_transactions:
         current_transactions.pop(message.chat.id)
         bot.reply_to(message, "Transaction cancelled")
-        print("cancel")
+        log(1, "cancel")
     else:
         handle_replies(message)
 
 
 @bot.message_handler(commands=['stop'])
 def stop(message):
-    print("stop")
+    log(1, "stop")
 
 
 @bot.message_handler()
