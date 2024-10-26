@@ -32,7 +32,7 @@ def check_transaction_timeout():
 def delete_transactions(keys):
     for key in keys:
         if key in current_transactions:
-            log(1, "'Deleting transactions...'")
+            log(1, "Deleting transactions...")
             bot.send_message(key, "Transaction timed out")
             current_transactions.pop(key, None)  # Use pop with default to avoid errors
 
