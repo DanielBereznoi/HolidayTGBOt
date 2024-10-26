@@ -1,4 +1,5 @@
 from time import sleep
+
 import telebot
 from telebot import types
 import time
@@ -6,6 +7,7 @@ from datetime import datetime
 import event_service
 import threading
 import re
+from logging import log
 
 import secret_parser
 
@@ -70,13 +72,11 @@ def validate_date(date_string):
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, f"Hello {message.chat.username}!")
-    print(message)
+
 
 
 @bot.message_handler(commands=['addevent'])
 def add_new_occasion(message):
-    print(message)
-    print(message.chat.id)
     bot.send_message(message.chat.id, "Insert the date of the event. Please use the format DD.MM.YYYY.")
     current_transactions[message.chat.id] = [time.time(), True]
 
@@ -148,8 +148,10 @@ def handle_replies(message):
     if chat_id in current_transactions:
         transaction = current_transactions[chat_id]
         if transaction[1] is True:  # Is multi-step transaction
+            update_transaction_timeout(chat_id)
             proccess_multistep_transaction(message, message_text, chat_id, transaction)
         elif transaction[1] is False:
+            update_transaction_timeout(chat_id)
             process_inline_transaction(message, message_text, chat_id)
     else:
         if message_text == "cancel":
@@ -170,7 +172,7 @@ def process_inline_transaction(message, message_text, chat_id):  # Format: []
         is_minute_valid = is_valid_time_range(hour, 0, 60)
         repeating_flag_valid = elements[3].lower() in ["yes", "y", "no", "n", "true", "false"]
         name_valid = is_valid_event_name(elements[2])
-        if name_valid and is_valid_date and is_hour_valid and is_minute_valid:
+        if name_valid and is_valid_date and is_hour_valid and is_minute_valid and repeating_flag_valid:
             repeating = elements[3].lower() in ["yes", "y", "true"]
             saved = event_service.add_data_to_db(chat_id, elements[0], hour, minute, elements[2], repeating)
             if saved:
@@ -183,6 +185,12 @@ def process_inline_transaction(message, message_text, chat_id):  # Format: []
         else:
             bot.reply_to(message, "Invalid inserted message. Please use format: DD.MM.YYYY - HH:mm - "
                                   "Event name - Repeating(y/n)")
+
+def update_transaction_timeout(chat_id):
+    transaction = current_transactions[chat_id]
+    transaction[0] = time.time()
+    current_transactions[chat_id] = transaction
+
 
 
 def proccess_multistep_transaction(message, message_text, chat_id, transaction):
