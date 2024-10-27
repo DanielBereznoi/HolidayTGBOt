@@ -1,5 +1,4 @@
 from time import sleep
-
 import telebot
 from telebot import types
 import time
@@ -7,9 +6,22 @@ from datetime import datetime
 import event_service
 import threading
 import re
-from logging import log
-
+import os
+import logging
+from logging.handlers import TimedRotatingFileHandler
 import secret_parser
+
+# Настройка логирования
+log_dir = 'logs'
+os.makedirs(log_dir, exist_ok=True)
+
+handler = TimedRotatingFileHandler(
+    os.path.join(log_dir, "bot.log"), when="midnight", interval=1, backupCount=30
+)
+handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 secret_parser.parse_secret()
 event_service.update_date()
@@ -22,7 +34,7 @@ current_transactions = {}
 
 def check_transaction_timeout():
     while True:
-        log(1, "Checking transaction timeout...")
+        logger.info("Checking transaction timeout...")
         # Directly remove timed-out transactions
         keys_to_remove = [key for key, value in current_transactions.items() if value[0] + 1 * 60 <= time.time()]
         delete_transactions(keys_to_remove)
@@ -32,14 +44,14 @@ def check_transaction_timeout():
 def delete_transactions(keys):
     for key in keys:
         if key in current_transactions:
-            log(1, "Deleting transactions...")
+            logger.info("Deleting transactions...")
             bot.send_message(key, "Transaction timed out")
             current_transactions.pop(key, None)  # Use pop with default to avoid errors
 
 
 def check_date():
     while True:
-        log(1, "Checking date...")
+        logger.info("Checking date...")
         is_eventful_day = event_service.check_dates()
         if is_eventful_day:
             events_for_today = event_service.get_events_by_today()
@@ -72,7 +84,7 @@ def validate_date(date_string):
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, f"Hello {message.chat.username}!")
-
+    logger.info(f"User {message.chat.username} started the bot.")
 
 
 @bot.message_handler(commands=['addevent'])
@@ -125,14 +137,14 @@ def cancel(message):
     if message.chat.id in current_transactions:
         current_transactions.pop(message.chat.id)
         bot.reply_to(message, "Transaction cancelled")
-        log(1, "cancel")
+        logger.info(f"Transaction cancelled by {message.chat.id}.")
     else:
         handle_replies(message)
 
 
 @bot.message_handler(commands=['stop'])
 def stop(message):
-    log(1, "stop")
+    logger.info("Stop command received.")
 
 
 @bot.message_handler()
@@ -249,6 +261,5 @@ def react_to_invalid_transaction_reply(message, phase):
         5: "Please insert values 'true' or 'false'"
     }
     bot.reply_to(message, switcher[phase])
-
-
+        
 bot.polling(non_stop=True)
