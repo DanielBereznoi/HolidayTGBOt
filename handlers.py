@@ -216,12 +216,16 @@ def process_multistep_transaction(message, message_text, chat_id, transaction):
             react_to_invalid_transaction_reply(message, transaction_phase)
 
     elif transaction_phase == 3:  # Adding time
-        hour, min = message_text.split(":")
-        if is_valid_time_range(hour, 0, 24) and is_valid_time_range(min, 0, 60):
-            transaction.append(message_text)
-            bot.send_message(chat_id, "Next, please insert the event name.")
-        else:
+        try:
+            hour, minute = message_text.split(":")
+            if is_valid_time_range(hour, 0, 24) and is_valid_time_range(minute, 0, 60):
+                transaction.append(message_text)
+                bot.send_message(chat_id, "Next, please insert the event name.")
+            else:
+                raise ValueError("Invalid time range")
+        except ValueError:
             react_to_invalid_transaction_reply(message, transaction_phase)
+
     elif transaction_phase == 4:  # Adding event name
         if is_valid_event_name(message_text):
             transaction.append(message_text)
