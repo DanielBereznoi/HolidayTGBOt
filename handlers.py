@@ -29,6 +29,7 @@ event_service.update_date()
 bot = telebot.TeleBot(token=secret_parser.bot_token)
 
 special_char_pattern = re.compile(r'[@_!#$%^&*()<>?/|}{~:]')
+time_pattern = re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')
 current_transactions = {}
 
 
@@ -178,14 +179,13 @@ def process_inline_transaction(message, message_text, chat_id):  # Format: []
                               "Event name - Repeating(y/n)")
     else:
         is_valid_date = validate_date(elements[0])
-        hour = elements[1].split(":")[0]
-        is_hour_valid = is_valid_time_range(hour, 0, 24)
-        minute = elements[1].split(":")[1]
-        is_minute_valid = is_valid_time_range(hour, 0, 60)
+        time_str = elements[1]
+        is_valid_time = is_time_valid(time_str)
         repeating_flag_valid = elements[3].lower() in ["yes", "y", "no", "n", "true", "false"]
         name_valid = is_valid_event_name(elements[2])
-        if name_valid and is_valid_date and is_hour_valid and is_minute_valid and repeating_flag_valid:
+        if name_valid and is_valid_date and is_valid_time and repeating_flag_valid:
             repeating = elements[3].lower() in ["yes", "y", "true"]
+            hour, minute = time_str.split(":")
             saved = event_service.add_data_to_db(chat_id, elements[0], hour, minute, elements[2], repeating)
             if saved:
                 bot.send_message(chat_id, f"Event added - {elements[0]} {hour}:{minute} {elements[2]}, "
@@ -206,7 +206,6 @@ def update_transaction_timeout(chat_id):
 
 
 def process_multistep_transaction(message, message_text, chat_id, transaction):
-    transaction = current_transactions[chat_id]
     transaction_phase = len(transaction)
     if transaction_phase == 2:  # Adding date
         if validate_date(message_text):
@@ -217,8 +216,7 @@ def process_multistep_transaction(message, message_text, chat_id, transaction):
 
     elif transaction_phase == 3:  # Adding time
         try:
-            hour, minute = message_text.split(":")
-            if is_valid_time_range(hour, 0, 24) and is_valid_time_range(minute, 0, 60):
+            if is_time_valid(message_text):
                 transaction.append(message_text)
                 bot.send_message(chat_id, "Next, please insert the event name.")
             else:
@@ -236,8 +234,8 @@ def process_multistep_transaction(message, message_text, chat_id, transaction):
     elif transaction_phase == 5:  # Adding repeating flag
         repeating_flag = message_text.lower()
         if repeating_flag in ["true", "false"]:
-            _, _, date, time, name = transaction
-            hour, minute = time.split(":")
+            _, _, date, time_str, name = transaction
+            hour, minute = time_str.split(":")
             repeating = repeating_flag == "true"
             saved = event_service.add_data_to_db(chat_id, date, hour, minute, name, repeating)
             if saved:
@@ -251,6 +249,15 @@ def process_multistep_transaction(message, message_text, chat_id, transaction):
 
 def is_valid_time_range(value, min_val, max_val):
     return value.isdigit() and min_val <= int(value) < max_val
+
+def is_time_valid(time_str):
+    if time_pattern.search(time_str) is not None:
+        hour, minute = time_str.split(":")
+        if hour.isdigit() and 0 <= int(hour) < 24 and minute.isdigit() and 0 <= int(minute) < 60:
+            return True
+    return False
+
+
 
 
 def is_valid_event_name(name):
