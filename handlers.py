@@ -88,12 +88,13 @@ def validate_date(date_string):
     date_format = "%d.%m.%Y"
     try:
         inserted_date = datetime.strptime(date_string, date_format)
-        if inserted_date > inserted_date.today():
+        if inserted_date >= datetime.today():
             return True
         else:
             return False
     except ValueError:
         return False
+
 
 
 @bot.message_handler(commands=['start'])
@@ -195,10 +196,10 @@ def process_inline_transaction(message, message_text, chat_id):  # Format: []
         is_valid_date = validate_date(elements[0])
         time_str = elements[1]
         is_valid_time = is_time_valid(time_str)
-        repeating_flag_valid = elements[3].lower() in ["yes", "y", "no", "n", "true", "false"]
+        repeating_flag_valid = elements[3].lower() in ["yes", "y", "no", "n", "r", "true", "false"]
         name_valid = is_valid_event_name(elements[2])
         if name_valid and is_valid_date and is_valid_time and repeating_flag_valid:
-            repeating = elements[3].lower() in ["yes", "y", "true"]
+            repeating = elements[3].lower() in ["yes", "y", "r", "true"]
             hour, minute = time_str.split(":")
             saved = event_service.add_data_to_db(chat_id, elements[0], hour, minute, elements[2], repeating)
             if saved:
