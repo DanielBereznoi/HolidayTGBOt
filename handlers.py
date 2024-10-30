@@ -7,22 +7,34 @@ import event_service
 import threading
 import re
 import os
+import json
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import secret_parser
 
-# Настройка логирования
-log_dir = 'logs'
-os.makedirs(log_dir, exist_ok=True)
+logs = 'logs'
+os.makedirs(logs, exist_ok=True)
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        log_entry = {
+            'level': record.levelname,
+            'message': record.getMessage(),
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        return json.dumps(log_entry)
 
 handler = TimedRotatingFileHandler(
-    os.path.join(log_dir, "bot.log"), when="midnight", interval=1, backupCount=30
+    os.path.join(logs, "bot.log"), when="midnight", interval=1, backupCount=30
 )
-handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+handler.setFormatter(JsonFormatter())
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
 
+def log_event(level, message):
+    logger.log(level, message)
+    
 secret_parser.parse_secret()
 event_service.update_date()
 
@@ -32,7 +44,9 @@ special_char_pattern = re.compile(r'[@_!#$%^&*()<>?/|}{~:]')
 time_pattern = re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')
 current_transactions = {}
 
-
+def handle_some_event():
+    log_event(logging.WARNING, "Some event occurred that may need attention.")
+    
 def check_transaction_timeout():
     while True:
         logger.info("Checking transaction timeout...")
@@ -85,7 +99,7 @@ def validate_date(date_string):
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, f"Hello {message.chat.username}!")
-    logger.info(f"User {message.chat.username} started the bot.")
+    log_event(logging.INFO, f"User {message.chat.username} started the bot.")
 
 
 @bot.message_handler(commands=['addevent'])
@@ -145,8 +159,8 @@ def cancel(message):
 
 @bot.message_handler(commands=['stop'])
 def stop(message):
-    logger.info("Stop command received.")
-
+    log_event(logging.CRITICAL, "Stop command received. Stopping the bot.")
+    #notify_admin("Critical event: Stop command received.")
 
 @bot.message_handler()
 def handle_replies(message):
