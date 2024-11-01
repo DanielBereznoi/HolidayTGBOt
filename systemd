@@ -1,0 +1,14 @@
+[Unit]
+Description=Telegram Bot
+After=network.target
+
+[Service]
+# Specify the path to your bot script with your virtual environment's python
+ExecStart=/root/project/tgbot/venelane/bin/python3 /root/project/tgbot/venelane/HolidayTGBOt/handlers.py
+WorkingDirectory=/root/project/tgbot/venelane/HolidayTGBOt
+Restart=always
+User=sparrow
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
