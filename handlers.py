@@ -11,6 +11,7 @@ import json
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import secret_parser
+import subprocess
 
 logs = 'logs'
 os.makedirs(logs, exist_ok=True)
@@ -272,12 +273,30 @@ def is_time_valid(time_str):
             return True
     return False
 
-
-
+@bot.message_handler(commands=['restart'])
+def restart_bot(message):
+    admin_id = 466698059
+    
+    if message.chat.id == admin_id:
+        bot.reply_to(message, "Restarting bot and pulling latest updates...")
+        log_event(logging.INFO, f"Bot restart triggered by {message.chat.username}")
+        os._exit(0)  # Terminate the bot, systemd or supervisor will restart it
+    else:
+        bot.reply_to(message, "Unauthorized command.")
 
 def is_valid_event_name(name):
     return len(name) <= 100 and special_char_pattern.search(name) is None
 
+def pull_updates():
+    try:
+        # Runs 'git pull' in the project's root directory
+        subprocess.run(["git", "-C", "/root/project/tgbot/venelane/HolidayTGBOt", "pull"], check=True)
+        log_event(logging.INFO, "Pulled latest updates from GitHub")
+    except subprocess.CalledProcessError as e:
+        log_event(logging.ERROR, f"Error pulling updates: {e}")
+
+# Call this function to pull updates before the bot starts
+pull_updates()
 
 def react_to_invalid_transaction_reply(message, phase):
     switcher = {
