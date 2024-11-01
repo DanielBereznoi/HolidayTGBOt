@@ -86,8 +86,11 @@ def update_date():
     updating_date = '''
         SELECT "event_timestamp" from "Events" order by "event_timestamp" limit 1
     '''
-    nearest_date = execute_query(updating_date)[0][0]
-    print("nearest_date = " + str(nearest_date))
+
+    result = execute_query(updating_date)
+    if result:
+        nearest_date = result[0][0]
+        print("nearest_date = " + str(nearest_date))
 
 
 def check_dates():
