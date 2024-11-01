@@ -2,7 +2,7 @@ from time import sleep
 import telebot
 from telebot import types
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import event_service
 import threading
 import re
@@ -10,6 +10,7 @@ import os
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import secret_parser
+import json
 
 logs = 'logs'
 os.makedirs(logs, exist_ok=True)
@@ -41,6 +42,7 @@ bot = telebot.TeleBot(token=secret_parser.bot_token)
 
 special_char_pattern = re.compile(r'[@_!#$%^&*()<>?/|}{~:]')
 time_pattern = re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')
+date_format = "%d.%m.%Y"
 current_transactions = {}
 
 def handle_some_event():
@@ -84,7 +86,6 @@ date_check_thread.start()
 
 
 def validate_date(date_string):
-    date_format = "%d.%m.%Y"
     try:
         inserted_date = datetime.strptime(date_string, date_format)
         if inserted_date >= datetime.today():
