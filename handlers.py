@@ -2,7 +2,7 @@ from time import sleep
 import telebot
 from telebot import types
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import event_service
 import threading
 import re
@@ -11,17 +11,28 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 import secret_parser
 
-# Настройка логирования
-log_dir = 'logs'
-os.makedirs(log_dir, exist_ok=True)
+logs = 'logs'
+os.makedirs(logs, exist_ok=True)
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        log_entry = {
+            'level': record.levelname,
+            'message': record.getMessage(),
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        return json.dumps(log_entry)
 
 handler = TimedRotatingFileHandler(
-    os.path.join(log_dir, "bot.log"), when="midnight", interval=1, backupCount=30
+    os.path.join(logs, "bot.log"), when="midnight", interval=1, backupCount=30
 )
-handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+handler.setFormatter(JsonFormatter())
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 logger.addHandler(handler)
+
+def log_event(level, message):
+    logger.log(level, message)
 
 secret_parser.parse_secret()
 event_service.update_date()
@@ -30,9 +41,10 @@ bot = telebot.TeleBot(token=secret_parser.bot_token)
 
 special_char_pattern = re.compile(r'[@_!#$%^&*()<>?/|}{~:]')
 time_pattern = re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')
-date_format = "%d.%m.%Y"
 current_transactions = {}
 
+def handle_some_event():
+    log_event(logging.WARNING, "Some event occurred that may need attention.")
 
 def check_transaction_timeout():
     while True:
@@ -72,9 +84,10 @@ date_check_thread.start()
 
 
 def validate_date(date_string):
+    date_format = "%d.%m.%Y"
     try:
         inserted_date = datetime.strptime(date_string, date_format)
-        if inserted_date >= inserted_date.today():
+        if inserted_date >= datetime.today():
             return True
         else:
             return False
@@ -82,10 +95,11 @@ def validate_date(date_string):
         return False
 
 
+
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, f"Hello {message.chat.username}!")
-    logger.info(f"User {message.chat.username} started the bot.")
+    log_event(logging.INFO, f"User {message.chat.username} started the bot.")
 
 
 @bot.message_handler(commands=['addevent'])
@@ -145,8 +159,8 @@ def cancel(message):
 
 @bot.message_handler(commands=['stop'])
 def stop(message):
-    logger.info("Stop command received.")
-
+    log_event(logging.CRITICAL, "Stop command received. Stopping the bot.")
+    #notify_admin("Critical event: Stop command received.")
 
 @bot.message_handler()
 def handle_replies(message):
@@ -176,11 +190,11 @@ def process_inline_transaction(message, message_text, chat_id):  # Format: []
     elements = message_text.split(" - ")
     if len(elements) != 4:
         bot.reply_to(message, "Invalid inserted message. Please use format: DD.MM.YYYY - HH:mm - "
-                              "Event name - Repeating(y/n). Make sure not to use past time.")
+                              "Event name - Repeating(y/n)")
     else:
         is_valid_date = validate_date(elements[0])
         time_str = elements[1]
-        is_valid_time = is_time_valid(time_str, elements[2])
+        is_valid_time = is_time_valid(time_str, elements[0])
         repeating_flag_valid = elements[3].lower() in ["yes", "y", "no", "n", "true", "false"]
         name_valid = is_valid_event_name(elements[2])
         if name_valid and is_valid_date and is_valid_time and repeating_flag_valid:
