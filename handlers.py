@@ -86,16 +86,18 @@ date_check_thread.start()
 
 
 def validate_date(date_string):
+    print("Validating date...")
     try:
-        inserted_date = datetime.strptime(date_string, date_format)
-        if inserted_date >= datetime.today():
+        inserted_date = str_date_to_date(date_string)
+        if inserted_date >= str_date_to_date(datetime.today().strftime(date_format)):
             return True
         else:
             return False
     except ValueError:
         return False
 
-
+def str_date_to_date(date_str):
+    return datetime.strptime(date_str, date_format)
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -223,6 +225,7 @@ def update_transaction_timeout(chat_id):
 def process_multistep_transaction(message, message_text, chat_id, transaction):
     transaction_phase = len(transaction)
     if transaction_phase == 2:  # Adding date
+        print("Need to validate date")
         if validate_date(message_text):
             transaction.append(message_text)
             bot.send_message(chat_id, "Next, please insert the time (24h format) when the event would happen.")
