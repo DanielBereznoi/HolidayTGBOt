@@ -1,17 +1,18 @@
+from validation import validate_date, is_time_valid, is_valid_event_name
 from time import sleep
 import telebot
 from telebot import types
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 import event_service
 import threading
-import re
 import os
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import secret_parser
 import subprocess
 import json
+
 
 logs = 'logs'
 os.makedirs(logs, exist_ok=True)
@@ -41,9 +42,6 @@ event_service.update_date()
 
 bot = telebot.TeleBot(token=secret_parser.bot_token)
 
-special_char_pattern = re.compile(r'[@_!#$%^&*()<>?/|}{~:]')
-time_pattern = re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')
-date_format = "%d.%m.%Y"
 current_transactions = {}
 
 def handle_some_event():
@@ -86,20 +84,6 @@ transaction_check_thread.start()
 date_check_thread.start()
 
 
-def validate_date(date_string):
-    print("Validating date...")
-    try:
-        inserted_date = str_date_to_date(date_string)
-        if inserted_date >= str_date_to_date(datetime.today().strftime(date_format)):
-            return True
-        else:
-            return False
-    except ValueError:
-        return False
-
-def str_date_to_date(date_str):
-    return datetime.strptime(date_str, date_format)
-
 @bot.message_handler(commands=['start'])
 def start(message):
     bot.send_message(message.chat.id, f"Hello {message.chat.username}!")
@@ -114,7 +98,6 @@ def add_new_occasion(message):
 
 @bot.message_handler(commands=['addeventinline'])
 def add_new_inline_event(message):  # Message format: DD.MM.YYYY - HH:mm - Event name - repeating
-    # list = "11.12.2024 - 12:20 - vaike valge vene Pede posi - Y".split(" - ")
     current_transactions[message.chat.id] = [time.time(), False]
     bot.send_message(message.chat.id, "Please insert the event description in one line. \n"
                                       "Please use format: DD.MM.YYYY - HH:mm - Event name - Repeating(y/n).\n"
@@ -264,22 +247,6 @@ def process_multistep_transaction(message, message_text, chat_id, transaction):
             current_transactions.pop(chat_id)
         else:
             react_to_invalid_transaction_reply(message, transaction_phase)
-
-
-def is_time_valid(time_str, date_string):
-    inserted_date = datetime.strptime(date_string, date_format)
-    if time_pattern.search(time_str) is not None:
-        hour, minute = time_str.split(":")
-        if hour.isdigit() and 0 <= int(hour) < 24 and minute.isdigit() and 0 <= int(minute) < 60 and not is_past_datetime(inserted_date, hour, minute):
-            return True
-    return False
-
-def is_past_datetime(inserted_date, hour, minute):
-    event_datetime = datetime.combine(inserted_date, datetime.min.time()) + timedelta(hours=int(hour), minutes=int(minute))
-    if event_datetime > datetime.now():
-        return False
-    else:
-        return True
     
 @bot.message_handler(commands=['restart'])
 def restart_bot(message):
@@ -288,18 +255,20 @@ def restart_bot(message):
     if message.chat.id == admin_id:
         bot.reply_to(message, "Restarting bot and pulling latest updates...")
         log_event(logging.INFO, f"Bot restart triggered by {message.chat.username}")
-        os._exit(0)  # Terminate the bot, systemd or supervisor will restart it
+        # os.exit(0)  # Terminate the bot, systemd or supervisor will restart it
     else:
         bot.reply_to(message, "Unauthorized command.")
 
+@bot.message_handler(commands=['stop'])
+def stop_bot(message):
+    quit()
 
-def is_valid_event_name(name):
-    return len(name) <= 100 and special_char_pattern.search(name) is None
+
 
 def pull_updates():
     try:
         # Runs 'git pull' in the project's root directory
-        subprocess.run(["git", "-C", "/root/project/tgbot/venelane/HolidayTGBOt", "pull"], check=True)
+        # subprocess.run(["git", "-C", "/root/project/tgbot/venelane/HolidayTGBOt", "pull"], check=True)
         log_event(logging.INFO, "Pulled latest updates from GitHub")
     except subprocess.CalledProcessError as e:
         log_event(logging.ERROR, f"Error pulling updates: {e}")
