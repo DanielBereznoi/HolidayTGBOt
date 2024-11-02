@@ -3,7 +3,7 @@ from time import sleep
 import telebot
 from telebot import types
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 import event_service
 import threading
 import os
@@ -22,7 +22,7 @@ class JsonFormatter(logging.Formatter):
         log_entry = {
             'level': record.levelname,
             'message': record.getMessage(),
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         return json.dumps(log_entry)
 
