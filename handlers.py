@@ -142,10 +142,6 @@ def restart_bot(message):
 def stop_bot(message):
     log_event(logging.CRITICAL, "Bot is stopping as per command.")
     quit()
-    
-@bot.error_handler
-def error_handler(update, error):
-    log_event(logging.ERROR, f"Error occurred: {str(error)}")
 
 start_metrics_server()
 bot.polling(non_stop=True)
