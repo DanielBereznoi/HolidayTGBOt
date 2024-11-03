@@ -1,27 +1,14 @@
-import psycopg2
-import database
 from datetime import datetime, timedelta
 from collections import defaultdict
 import time
+import database
 
 nearest_date = None
 user_blacklist = []
 
-def execute_query(query, params=None):
-    """Optimisation"""
-    try:
-        with database.get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(query, params)
-                if query.strip().lower().startswith('select'):
-                    return cursor.fetchall()
-    except psycopg2.Error as e:
-        print(f"Ошибка при выполнении запроса: {e}")
-
-
 def get_data_from_db():
     # Выполняем запрос для получения всех данных из таблицы
-    rows = execute_query('SELECT "chat_ID", "event_timestamp", "event_name", "ID", "repeating" FROM "Events"')
+    rows = database.execute_query('SELECT "chat_ID", "event_timestamp", "event_name", "ID", "repeating" FROM "Events"')
 
     # Выводим данные
     print("Данные из таблицы:")
@@ -31,10 +18,8 @@ def get_data_from_db():
     else:
         print("Нет данных в таблице.")
 
-
 def add_data_to_db(chat_ID, event_date, hour, minute, event_name, repeating):
     """SQL-запрос добавления данных с новым столбцом"""
-    # Проверяем, существует ли уже запись с таким chat_ID, event_timestamp и event_name
     event_date = datetime.strptime(event_date, '%d.%m.%Y').date()
     event_timestamp = datetime.combine(event_date, datetime.min.time()) + timedelta(hours=int(hour), minutes=int(minute))
     
@@ -42,33 +27,28 @@ def add_data_to_db(chat_ID, event_date, hour, minute, event_name, repeating):
         print("Ошибка: запись уже существует.")
         return False
 
-    # Если записи нет, добавляем новую
-    execute_query('INSERT INTO "Events" ("chat_ID", "event_name", "event_timestamp", "repeating") VALUES (%s, %s, %s, %s)',
+    database.execute_query('INSERT INTO "Events" ("chat_ID", "event_name", "event_timestamp", "repeating") VALUES (%s, %s, %s, %s)',
                   (chat_ID, event_name, event_timestamp, repeating))
     update_date()
     return True
 
-
 def check_record_exists(chat_ID, event_timestamp, event_name):
     """Проверка существования записи"""
     query = 'SELECT "ID" FROM "Events" WHERE "chat_ID" = %s AND "event_name" = %s AND "event_timestamp" = %s'
-    result = execute_query(query, (chat_ID, event_name, event_timestamp))
+    result = database.execute_query(query, (chat_ID, event_name, event_timestamp))
     return bool(result)  # Возвращаем True, если запись существует, и False в противном случае
-
 
 def delete_data_from_db(identifier):
     # SQL-запрос удаления данных
-    execute_query('DELETE FROM "Events" WHERE "ID" = %s', (identifier,))
+    database.execute_query('DELETE FROM "Events" WHERE "ID" = %s', (identifier,))
     print("Данные удалены.")
     update_date()
-
 
 def get_events_by_chat_id(chat_ID):
     # Получение всех событий для пользователя, отсортированных по дате
     query = 'SELECT "chat_ID", "event_timestamp", "event_name", "ID", "repeating" FROM "Events" WHERE "chat_ID" = %s ORDER BY "event_timestamp"'
-    rows = execute_query(query, (chat_ID,))
+    rows = database.execute_query(query, (chat_ID,))
     return rows
-
 
 def get_events_by_today():
     """Получение всех событий для пользователя за сегодня"""
@@ -76,9 +56,8 @@ def get_events_by_today():
         SELECT "chat_ID", "event_timestamp", "event_name", "ID", "repeating" FROM "Events" 
         WHERE "event_timestamp" = CURRENT_DATE
     '''
-    rows = execute_query(query)
+    rows = database.execute_query(query)
     return rows  # Добавлено
-
 
 def update_date():
     global nearest_date
@@ -87,11 +66,10 @@ def update_date():
         SELECT "event_timestamp" from "Events" order by "event_timestamp" limit 1
     '''
 
-    result = execute_query(updating_date)
+    result = database.execute_query(updating_date)
     if result:
         nearest_date = result[0][0]
         print("nearest_date = " + str(nearest_date))
-
 
 def check_dates():
     global nearest_date
@@ -108,7 +86,6 @@ def check_dates():
             return False
         else:
             return True
-
 
 def update_events(events):
     updated_events = []
@@ -129,17 +106,13 @@ def update_events(events):
                       f'SET "event_timestamp" = updated_event.event_timestamp '
                       f'FROM (VALUES {updated_values}) AS updated_event(ID, event_timestamp) '
                       f'WHERE "Events"."ID" = updated_event.ID;')
-        execute_query(update_sql)
+        database.execute_query(update_sql)
 
     if len(deleted_events) > 0:
         deleted_events_str = ", ".join(map(str, deleted_events))
         delete_sql = (f'DELETE FROM "Events" '
                       f'WHERE "Events"."ID" IN ({deleted_events_str});')
-        execute_query(delete_sql)
-
-
-
-
+        database.execute_query(delete_sql)
 
 # Словари для отслеживания сообщений и активности
 message_count = defaultdict(int)
@@ -152,15 +125,13 @@ def is_blacklisted(user_id):
 
 def fetch_blacklist():
     global user_blacklist
-    user_blacklist = execute_query('SELECT chat_id FROM blacklist')
-
+    user_blacklist = database.execute_query('SELECT chat_id FROM blacklist')
 
 # Функция для добавления пользователя в черный список
 def add_to_blacklist(user_id):
     if user_id not in user_blacklist:
         user_blacklist.append(user_id)
-        execute_query('INSERT INTO blacklist (chat_id) VALUES (%s)', user_id)
-
+        database.execute_query('INSERT INTO blacklist (chat_id) VALUES (%s)', (user_id,))
 
 # Функция для отправки уведомления администратору
 def notify_admin(context, user_id):
@@ -169,7 +140,6 @@ def notify_admin(context, user_id):
     message = f"Пользователь {user_id} был заблокирован за спам."
     context.bot.send_message(chat_id=admin_chat_id, text=message)
     context.bot.send_message(chat_id=admin_chat_id1, text=message)
-
 
 # Обработка входящих сообщений
 def handle_message(update, context):
@@ -210,14 +180,3 @@ def handle_message(update, context):
 # Вызов функции для получения данных
 if __name__ == "__main__":
     import datetime
-    # get_data_from_db()
-    events = [(5167789151, datetime.date(2024, 10, 14), 'Poshol nahs', 7, True),
-              (5167789151, datetime.date(2024, 10, 13), 'Poshol nah', 8, True),
-              (466698059, datetime.date(2025, 2, 17), 'курва език', 10, False),
-              (5167789151, datetime.date(2024, 12, 10), 'Pidor', 11, True),
-              (5167789151, datetime.date(2024, 10, 20), 'Homo', 12, True),
-              (5167789151, datetime.date(2024, 10, 20), 'Homo1', 13, True),
-              (5167789151, datetime.date(2024, 10, 20), 'Homo12', 14, True)]
-    update_events(events)
-# data = [(1,2), (3,4), (5,6)]
-# print(str(data).replace("[", "").replace("]", ""))
