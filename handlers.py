@@ -16,30 +16,7 @@ from logging.handlers import TimedRotatingFileHandler
 import secret_parser
 import subprocess
 import json
-
-
-logs = 'logs'
-os.makedirs(logs, exist_ok=True)
-
-class JsonFormatter(logging.Formatter):
-    def format(self, record):
-        log_entry = {
-            'level': record.levelname,
-            'message': record.getMessage(),
-            'timestamp': datetime.now(timezone.utc).isoformat()
-        }
-        return json.dumps(log_entry)
-
-handler = TimedRotatingFileHandler(
-    os.path.join(logs, "bot.log"), when="midnight", interval=1, backupCount=30
-)
-handler.setFormatter(JsonFormatter())
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logger.addHandler(handler)
-
-def log_event(level, message):
-    logger.log(level, message)
+from metrics import increment_message_count, add_unique_user, track_command_time, start_metrics_server
 
 secret_parser.parse_secret()
 event_service.update_date()
@@ -171,17 +148,5 @@ def restart_bot(message):
 def stop_bot(message):
     quit()
 
-
-
-def pull_updates():
-    try:
-        # Runs 'git pull' in the project's root directory
-        # subprocess.run(["git", "-C", "/root/project/tgbot/venelane/HolidayTGBOt", "pull"], check=True)
-        log_event(logging.INFO, "Pulled latest updates from GitHub")
-    except subprocess.CalledProcessError as e:
-        log_event(logging.ERROR, f"Error pulling updates: {e}")
-
-# Call this function to pull updates before the bot starts
-pull_updates()
-
+start_metrics_server()
 bot.polling(non_stop=True)
