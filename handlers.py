@@ -3,7 +3,6 @@ import transaction
 from bot_utils import command_list
 from transaction import chat_id_in_transaction, process_transaction, check_transaction_timeout, \
     get_timed_out_transactions
-# from logger import log_event, handle_some_event
 from time import sleep
 import telebot
 from telebot import types
@@ -16,7 +15,7 @@ from logging.handlers import TimedRotatingFileHandler
 import secret_parser
 import subprocess
 import json
-from metrics import increment_message_count, add_unique_user, track_command_time, start_metrics_server
+from metrics import increment_message_count, track_command_time, start_metrics_server
 
 secret_parser.parse_secret()
 event_service.update_date()
