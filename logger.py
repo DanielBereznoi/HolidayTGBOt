@@ -35,3 +35,4 @@ def log_event(level, message):
 # Функция для обработки события и записи в лог
 def handle_some_event():
     log_event(logging.WARNING, "Some event occurred that may need attention.")
+    logger.debug("Debug: Event handled successfully.")  # добавьте отладочное сообщение

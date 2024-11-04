@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 import event_service
 import threading
 import os
-#from logger import #log_event
+from logger import log_event
 import secret_parser
 
 from metrics import increment_message_count, track_command_time, start_metrics_server
@@ -20,12 +20,12 @@ event_service.update_date()
 bot = telebot.TeleBot(token=secret_parser.bot_token)
 
 def handle_some_event():
-    #log_event(logging.WARNING, "Some event occurred that may need attention.")
+    log_event(logging.WARNING, "Some event occurred that may need attention.")
     pass
 
 def check_date():
     while True:
-        #log_event(logging.INFO, "Checking date...")
+        log_event(logging.INFO, "Checking date...")
         is_eventful_day = event_service.check_dates()
         if is_eventful_day:
             events_for_today = event_service.get_events_by_today()
@@ -54,7 +54,7 @@ def start(message):
     #increment_message_count()  # Увеличиваем счётчик сообщений
     #increment_total_users()     # Увеличиваем общее количество пользователей
     bot.send_message(message.chat.id, f"Hello {message.chat.username}!")
-    #log_event(logging.INFO, f"User {message.chat.username} started the bot.")
+    log_event(logging.INFO, f"User {message.chat.username} started the bot.")
 
 @bot.message_handler(commands=['addevent'])
 def add_new_occasion(message):
@@ -104,12 +104,12 @@ def cancel(message):
     if transaction.chat_id_in_transaction(message.chat.id):
         transaction.delete_transactions([message.chat.id])
         bot.reply_to(message, "Transaction cancelled")
-        #log_event(logging.INFO, f"Transaction cancelled by {message.chat.id}.")
+        log_event(logging.INFO, f"Transaction cancelled by {message.chat.id}.")
     else:
         handle_replies(message)
 
 def stop(message):
-    #log_event(logging.CRITICAL, "Stop command received. Stopping the bot.")
+    log_event(logging.CRITICAL, "Stop command received. Stopping the bot.")
     #notify_admin("Critical event: Stop command received.")
     pass
 
@@ -118,7 +118,7 @@ def handle_replies(message):
     if  message.text in command_list:
         pass
 
-    #log_event(logging.WARNING, f"Unknown command received: {message.text}")
+    log_event(logging.WARNING, f"Unknown command received: {message.text}")
 
     if chat_id_in_transaction(message.chat.id):
         is_reply, return_message = process_transaction(message)
@@ -135,14 +135,14 @@ def restart_bot(message):
     
     if message.chat.id == admin_id:
         bot.reply_to(message, "Restarting bot and pulling latest updates...")
-        #log_event(logging.INFO, f"Bot restart triggered by {message.chat.username}")
+        log_event(logging.INFO, f"Bot restart triggered by {message.chat.username}")
         # os.exit(0)  # Terminate the bot, systemd or supervisor will restart it
     else:
         bot.reply_to(message, "Unauthorized command.")
 
 @bot.message_handler(commands=['stop'])
 def stop_bot(message):
-    #log_event(logging.CRITICAL, "Bot is stopping as per command.")
+    log_event(logging.CRITICAL, "Bot is stopping as per command.")
     quit()
 
 start_metrics_server()
