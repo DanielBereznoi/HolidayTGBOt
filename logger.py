@@ -32,7 +32,9 @@ def log_event(level, message):
     levels = {
         'INFO': logging.INFO, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL, 'WARNING': logging.WARNING, 'DEBUG': logging.DEBUG,
     }
+    print(levels.get(level))
     logger.log(levels.get(level), message)
+    print(type(levels.get(level)))
 
 # Функция для обработки события и записи в лог
 def handle_some_event():
