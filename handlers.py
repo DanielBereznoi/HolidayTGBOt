@@ -114,7 +114,7 @@ def stop(message):
         log_event(logging.CRITICAL, "Stop command received. Stopping the bot.")
         # notify_admin("Critical event: Stop command received.")
     except Exception as e:
-        print(f"Error logging event: {e}")
+        log_event(logging.ERROR, f"Error logging event: {e}")  # Логирование ошибки
         
 @bot.message_handler()
 def handle_replies(message):
