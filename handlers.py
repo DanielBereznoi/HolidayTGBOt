@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 import event_service
 import threading
 import os
+import logging
 from logger import log_event
 import secret_parser
 
@@ -109,10 +110,12 @@ def cancel(message):
         handle_replies(message)
 
 def stop(message):
-    log_event(logging.CRITICAL, "Stop command received. Stopping the bot.")
-    #notify_admin("Critical event: Stop command received.")
-    pass
-
+    try:
+        log_event(logging.CRITICAL, "Stop command received. Stopping the bot.")
+        # notify_admin("Critical event: Stop command received.")
+    except Exception as e:
+        print(f"Error logging event: {e}")
+        
 @bot.message_handler()
 def handle_replies(message):
     if  message.text in command_list:
