@@ -18,7 +18,7 @@ class JsonFormatter(logging.Formatter):
 
 # Настраиваем обработчик для ротации логов
 handler = TimedRotatingFileHandler(
-    os.path.join(logs, "bot.log"), when="m", interval=3, backupCount=60
+    os.path.join(logs, "bot.log"), when="M", interval=2, backupCount=30
 )
 handler.setFormatter(JsonFormatter())
 
