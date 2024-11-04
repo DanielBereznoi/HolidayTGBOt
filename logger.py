@@ -18,7 +18,7 @@ class JsonFormatter(logging.Formatter):
 
 # Настраиваем обработчик для ротации логов
 handler = TimedRotatingFileHandler(
-    os.path.join(logs, "bot.log"), when="M", interval=2, backupCount=30
+    os.path.join(logs, "bot.log"), when="D", interval=1, backupCount=28
 )
 handler.setFormatter(JsonFormatter())
 
@@ -29,17 +29,8 @@ logger.addHandler(handler)
 
 # Функция для записи сообщений лога
 def log_event(level, message):
-    levels = {
-        'INFO': logging.INFO,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL,
-        'WARNING': logging.WARNING,
-        'DEBUG': logging.DEBUG,
-    }
-    
-    print(levels.get(level))
+    levels = {key: getattr(logging, key) for key in ['INFO', 'ERROR', 'CRITICAL', 'WARNING', 'DEBUG']}
     logger.log(levels.get(level), message)
-    print(type(levels.get(level)))
 
 # Функция для обработки события и записи в лог
 def handle_some_event():
