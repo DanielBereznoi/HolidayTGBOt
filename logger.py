@@ -51,5 +51,5 @@ def handle_some_event():
     logger.debug("Debug: Event handled successfully.")
     print("Event handled")  # Отладочное сообщение на экран
 
-# Пример вызова функции
+# Пример вызова функцииF
 handle_some_event()
