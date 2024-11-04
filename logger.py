@@ -29,11 +29,10 @@ logger.addHandler(handler)
 
 # Функция для записи сообщений лога
 def log_event(level, message):
-    try:
-        logger.log(level, message)
-        print(f"Logged: {level} - {message}")  # Отладочная информация
-    except Exception as e:
-        print(f"Logging error: {e}")
+    levels = {
+        'INFO': logging.INFO, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL, 'WARNING': logging.WARNING, 'DEBUG': logging.DEBUG,
+    }
+    logger.log(levels.get(level), message)
 
 # Функция для обработки события и записи в лог
 def handle_some_event():
