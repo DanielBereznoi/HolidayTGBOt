@@ -100,9 +100,9 @@ def process_multistep_transaction(message, transaction):
 
     elif transaction_phase == 3:  # Adding time
         time_invalid = is_time_invalid(message_text)
-        hour, minute = message_text.split(":")
-        past_datetime = is_past_datetime(transaction[2], hour, minute)
         if not time_invalid:
+            hour, minute = message_text.split(":")
+            past_datetime = is_past_datetime(transaction[2], hour, minute)
             if not past_datetime:
                 transaction.append(message_text)
                 return False, "Next, please insert the event name."
