@@ -11,6 +11,7 @@ import threading
 import os
 from logger import log_event
 import secret_parser
+import sys
 
 #from metrics import increment_message_count, track_command_time, start_metrics_server
 
@@ -145,7 +146,8 @@ def restart_bot(message):
 @bot.message_handler(commands=['stop'])
 def stop_bot(message):
     log_event("CRITICAL", "Bot is stopping as per command.")
-    quit()
+    print("Stopping the bot...")  # Можно добавить сообщение перед остановкой
+    sys.exit()
 
 #start_metrics_server()
 bot.polling(non_stop=True)
