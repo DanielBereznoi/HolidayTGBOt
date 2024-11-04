@@ -13,7 +13,7 @@ import logging
 from logger import log_event
 import secret_parser
 
-from metrics import increment_message_count, track_command_time, start_metrics_server
+#from metrics import increment_message_count, track_command_time, start_metrics_server
 
 secret_parser.parse_secret()
 event_service.update_date()
@@ -148,5 +148,5 @@ def stop_bot(message):
     log_event(logging.CRITICAL, "Bot is stopping as per command.")
     quit()
 
-start_metrics_server()
+#start_metrics_server()
 bot.polling(non_stop=True)
