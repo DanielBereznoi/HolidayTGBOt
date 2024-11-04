@@ -27,6 +27,7 @@ def is_inline_transaction(chat_id):
 
 def process_inline_transaction(message):
     elements = message.text.split(" - ")
+    update_transaction_timeout(message.chat.id)
     if len(elements) != 4:
         return True, "Invalid inserted message. Please use format: DD.MM.YYYY - HH:mm - Event name - Repeating(y/n)"
 
@@ -88,6 +89,7 @@ def process_multistep_transaction(message, transaction):
     message_text = message.text
     chat_id = message.chat.id
     transaction_phase = len(transaction)
+    update_transaction_timeout(chat_id)
     if transaction_phase == 2:  # Adding date
         date_invalid = is_date_invalid(message_text)
         if not date_invalid:
@@ -98,9 +100,9 @@ def process_multistep_transaction(message, transaction):
 
     elif transaction_phase == 3:  # Adding time
         time_invalid = is_time_invalid(message_text)
-        hour, minute = message_text.split(":")
-        past_datetime = is_past_datetime(transaction[2], hour, minute)
         if not time_invalid:
+            hour, minute = message_text.split(":")
+            past_datetime = is_past_datetime(transaction[2], hour, minute)
             if not past_datetime:
                 transaction.append(message_text)
                 return False, "Next, please insert the event name."
