@@ -30,19 +30,24 @@ logger.addHandler(handler)
 # Функция для записи сообщений лога
 def log_event(level, message):
     levels = {
-        'INFO': logging.INFO, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL, 'WARNING': logging.WARNING, 'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'ERROR': logging.ERROR,
+        'CRITICAL': logging.CRITICAL,
+        'WARNING': logging.WARNING,
+        'DEBUG': logging.DEBUG,
     }
+    
     print(levels.get(level))
     logger.log(levels.get(level), message)
     print(type(levels.get(level)))
 
 # Функция для обработки события и записи в лог
 def handle_some_event():
-    log_event(logging.DEBUG, "This is a debug message: handling event started.")
-    log_event(logging.INFO, "Some event occurred that may need attention.")
-    log_event(logging.WARNING, "This is a warning message: something unusual happened.")
-    log_event(logging.ERROR, "This is an error message: something went wrong.")
-    log_event(logging.CRITICAL, "This is a critical message: a serious error occurred.")
+    log_event("DEBUG", "This is a debug message: handling event started.")
+    log_event("INFO", "Some event occurred that may need attention.")
+    log_event("WARNING", "This is a warning message: something unusual happened.")
+    log_event("ERROR", "This is an error message: something went wrong.")
+    log_event("CRITICAL", "This is a critical message: a serious error occurred.")
     logger.debug("Debug: Event handled successfully.")
     print("Event handled")  # Отладочное сообщение на экран
 
