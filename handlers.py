@@ -101,7 +101,7 @@ def add_special_event(message):
     markup.add(types.InlineKeyboardButton(text="Estonian national holidays", callback_data="est_special"))
     markup.add(types.InlineKeyboardButton(text="Russian national holidays", callback_data="rus_special"))
     markup.add(types.InlineKeyboardButton(text="Dynamic national holidays", callback_data="dynamic_special"))
-    bot.send_message(message, reply_markup=markup, text="Select what type of special event you want to add")
+    bot.send_message(message.chat.id, reply_markup=markup, text="Select what type of special event you want to add")
 
 
 @bot.callback_query_handler(func=lambda call: True)
