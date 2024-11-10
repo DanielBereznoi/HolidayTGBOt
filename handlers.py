@@ -150,5 +150,10 @@ def stop_bot(message):
     print("Stopping the bot...")  # Можно добавить сообщение перед остановкой
     sys.exit()
 
+@bot.message_handler(commands=['restart'])
+def restart_bot(message):
+    bot.send_message(message.chat.id, "Restarting bot...")
+    event_service.reboot_system()
+
 #start_metrics_server()
 bot.polling(non_stop=True)
