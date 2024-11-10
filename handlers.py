@@ -18,7 +18,7 @@ import secret_parser
 
 secret_parser.parse_secret()
 event_service.update_date()
-
+admins = [466698059, 5167789151]
 bot = telebot.TeleBot(token=secret_parser.bot_token)
 
 
@@ -152,7 +152,7 @@ def stop(message):
 
 @bot.message_handler(commands=['restart'])
 def restart_bot(message):
-    admins = [466698059, 5167789151]
+
 
     if message.chat.id in admins:
         bot.reply_to(message, "Restarting bot and pulling latest updates, please wait a few minutes")
@@ -165,7 +165,6 @@ def restart_bot(message):
 
 @bot.message_handler(commands=['shutdown'])
 def stop_bot(message):
-    admins = [466698059, 5167789151]
 
     if message.chat.id in admins:
         bot.reply_to(message, "Stopping bot!")
@@ -202,6 +201,14 @@ def handle_replies(message):
             bot.send_message(message.chat.id, return_message)
     else:
         bot.reply_to(message, "Please insert a valid command. To get a list of possible commands insert '/help'")
+
+
+def send_start_up_notification():
+    for admin in admins:
+        bot.send_message(admin, "Bot has started")
+
+
+send_start_up_notification()
 
 
 # start_metrics_server()
