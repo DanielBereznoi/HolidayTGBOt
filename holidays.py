@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from event_service import add_data_to_db
 
 # Эстонские государственные праздники с фиксированными датами
 estonian_fixed_holidays = [
@@ -62,6 +63,11 @@ if __name__ == "__main__":
     updated_floating_holidays = get_floating_holidays(year)
 
     # Печатаем праздники
+def est_holidays(): 
     print_holidays(updated_estonian_fixed_holidays, "Эстонские государственные праздники")
+    
+def rus_holidays():
     print_holidays(updated_russian_fixed_holidays, "Русские праздники")
+    
+def dynaming_holidays():
     print_holidays(updated_floating_holidays, "Плавающие праздники")

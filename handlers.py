@@ -118,22 +118,25 @@ def stop(message):
 
 @bot.message_handler(commands=['restart'])
 def restart_bot(message):
-    admin_id = 466698059
+    admins = [466698059, 5167789151]
     
-    if message.chat.id == admin_id:
+    if message.chat.id in admins:
         bot.reply_to(message, "Restarting bot and pulling latest updates, please wait a few minutes")
         log_event("INFO", f"Bot restart triggered by {message.chat.username}")
         event_service.reboot_system()
-        # os.exit(0)  # Terminate the bot, systemd or supervisor will restart it
     else:
         bot.reply_to(message, "Unauthorized command.")
 
 @bot.message_handler(commands=['shutdown'])
 def stop_bot(message):
-    log_event("CRITICAL", "Shutdown system")
-    print("Shutdown the system")  # Можно добавить сообщение перед остановкой
-    event_service.shutdown_system()
-
+    admins = [466698059, 5167789151]
+    
+    if message.chat.id in admins:
+        bot.reply_to(message, "Stopping bot!")
+        log_event("CRITICAL", "The system is shutdown!")
+        event_service.shutdown_system()
+    else:
+        bot.reply_to(message, "Unauthorized command.")
 
 @bot.message_handler()
 def handle_replies(message):

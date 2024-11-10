@@ -8,8 +8,6 @@ import database
 nearest_event_datetime = None
 user_blacklist = []
 
-
-
 def get_data_from_db():
     # Выполняем запрос для получения всех данных из таблицы
     rows = database.execute_query('SELECT "chat_ID", "event_timestamp", "event_name", "ID", "repeating" FROM "Events"')
@@ -21,7 +19,6 @@ def get_data_from_db():
             print(row)
     else:
         print("Нет данных в таблице.")
-
 
 def add_data_to_db(chat_ID, event_date, hour, minute, event_name, repeating):
     """SQL-запрос добавления данных с новым столбцом"""
@@ -39,13 +36,11 @@ def add_data_to_db(chat_ID, event_date, hour, minute, event_name, repeating):
     update_date()
     return True
 
-
 def check_record_exists(chat_ID, event_timestamp, event_name):
     """Проверка существования записи"""
     query = 'SELECT "ID" FROM "Events" WHERE "chat_ID" = %s AND "event_name" = %s AND "event_timestamp" = %s'
     result = database.execute_query(query, (chat_ID, event_name, event_timestamp))
     return bool(result)  # Возвращаем True, если запись существует, и False в противном случае
-
 
 def delete_data_from_db(identifier):
     # SQL-запрос удаления данных
@@ -53,13 +48,11 @@ def delete_data_from_db(identifier):
     print("Данные удалены.")
     update_date()
 
-
 def get_events_by_chat_id(chat_id):
     # Получение всех событий для пользователя, отсортированных по дате
     query = 'SELECT "chat_ID", "event_timestamp", "event_name", "ID", "repeating" FROM "Events" WHERE "chat_ID" = %s ORDER BY "event_timestamp"'
     rows = database.execute_query(query, (chat_id,))
     return rows
-
 
 def get_events_by_datetime():
     """Получение всех событий для пользователя за сегодня"""
@@ -70,7 +63,6 @@ def get_events_by_datetime():
     rows = database.execute_query(query)
     return rows  # Добавлено
 
-
 def update_date():
     global nearest_event_datetime
     """Получение всех событий и обновление ближайшей даты"""
@@ -79,8 +71,7 @@ def update_date():
         WHERE "event_timestamp" >= '{datetime.now().strftime(bot_utils.datetime_strformat)}'
         ORDER BY "event_timestamp" LIMIT 1
     '''
-
-
+    
     result = database.execute_query(updating_date)
     if result:
         print(datetime.now().strftime(bot_utils.datetime_strformat))
@@ -89,7 +80,6 @@ def update_date():
         nearest_event_datetime = result[0][0]
     else:
         nearest_event_datetime =  None
-
 
 def check_dates():
     global nearest_event_datetime
@@ -107,7 +97,6 @@ def check_dates():
         if start <= current_datetime <= end:
             return True
         return False
-
 
 def update_events(events):
     updated_events = []
@@ -136,29 +125,24 @@ def update_events(events):
                     f'WHERE "Events"."ID" IN ({deleted_events_str});')
         database.execute_query(delete_sql)
 
-
 # Словари для отслеживания сообщений и активности
 message_count = defaultdict(int)
 last_message_time = defaultdict(float)
 user_activity = defaultdict(lambda: {'messages': 0, 'last_activity': 0})
 
-
 # Функция для проверки, есть ли пользователь в черном списке
 def is_blacklisted(user_id):
     return user_id in user_blacklist
 
-
 def fetch_blacklist():
     global user_blacklist
     user_blacklist = database.execute_query('SELECT chat_id FROM blacklist')
-
 
 # Функция для добавления пользователя в черный список
 def add_to_blacklist(user_id):
     if user_id not in user_blacklist:
         user_blacklist.append(user_id)
         database.execute_query('INSERT INTO blacklist (chat_id) VALUES (%s)', (user_id,))
-
 
 # Функция для отправки уведомления администратору
 def notify_admin(context, user_id):
@@ -167,7 +151,6 @@ def notify_admin(context, user_id):
     message = f"Пользователь {user_id} был заблокирован за спам."
     context.bot.send_message(chat_id=admin_chat_id, text=message)
     context.bot.send_message(chat_id=admin_chat_id1, text=message)
-
 
 # Обработка входящих сообщений
 def handle_message(update, context):

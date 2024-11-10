@@ -9,8 +9,8 @@ transaction_messages_eng = {
     'wrong_transaction_input': 'Invalid inserted message. Please use format: \nDD.MM.YYYY - HH:mm - name - Repeating(y/n)',
     'next_date': 'Insert the date of the event. Please use the format DD.MM.YYYY.',
     'inline_event_info': "Please insert the event description in one line. \n"
-                         "Please use format: \nDD.MM.YYYY - HH:mm - name - Repeating(y/n).\n"
-                         "Repeating means that event would repeat yearly.",
+                        "Please use format: \nDD.MM.YYYY - HH:mm - name - Repeating(y/n).\n"
+                        "Repeating means that event would repeat yearly.",
     'event_not_saved': 'Bot is experiencing problems. Please try again later.'
 
 }
