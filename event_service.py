@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from collections import defaultdict
 import time
-
+import subprocess
 import bot_utils
 import database
 
@@ -125,15 +125,15 @@ def update_events(events):
             for ID, updated_date in updated_events
         )
         update_sql = (f'UPDATE "Events" '
-                      f'SET "event_timestamp" = updated_event.event_timestamp '
-                      f'FROM (VALUES {updated_values}) AS updated_event(ID, event_timestamp) '
-                      f'WHERE "Events"."ID" = updated_event.ID;')
+                    f'SET "event_timestamp" = updated_event.event_timestamp '
+                    f'FROM (VALUES {updated_values}) AS updated_event(ID, event_timestamp) '
+                    f'WHERE "Events"."ID" = updated_event.ID;')
         database.execute_query(update_sql)
 
     if len(deleted_events) > 0:
         deleted_events_str = ", ".join(map(str, deleted_events))
         delete_sql = (f'DELETE FROM "Events" '
-                      f'WHERE "Events"."ID" IN ({deleted_events_str});')
+                    f'WHERE "Events"."ID" IN ({deleted_events_str});')
         database.execute_query(delete_sql)
 
 
@@ -176,7 +176,7 @@ def handle_message(update, context):
     # Проверка на наличие в черном списке
     if is_blacklisted(user_id):
         context.bot.reply_to(chat_id=update.effective_chat.id,
-                             text="Вы заблокированы, обратитесь к создателям этого шедевра")
+            text="Вы заблокированы, обратитесь к создателям этого шедевра")
         return
 
     # Установка текущего времени
@@ -195,16 +195,23 @@ def handle_message(update, context):
 
     if message_count[user_id] > 20:  # Лимит на 20 сообщений в минуту
         context.bot.reply_to(chat_id=update.effective_chat.id,
-                             text="Вы превысили лимит сообщений. Пожалуйста, подождите.")
+            text="Вы превысили лимит сообщений. Пожалуйста, подождите.")
         return
 
     if user_activity[user_id]['messages'] > 20:  # Лимит на 20 сообщений
         add_to_blacklist(user_id)  # Добавление в черный список
         notify_admin(user_id)  # Уведомление администраторов
         context.bot.reply_to(chat_id=update.effective_chat.id,
-                             text="Вы были заблокированы за спам, обратитесь к создателям этого шедевра")
+            text="Вы были заблокированы за спам, обратитесь к создателям этого шедевра")
         return
 
     # Ответ на сообщение
     context.bot.reply_to(chat_id=update.effective_chat.id, text="Сообщение принято!")
 
+def reboot_system():
+    try:
+        # Выполняем команду reboot через subprocess
+        subprocess.run(['sudo', 'reboot'], check=True)
+        print("Система перезагружается...")
+    except subprocess.CalledProcessError as e:
+        print(f"Возникла ошибка при попытке перезагрузить систему: {e}")

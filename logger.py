@@ -47,5 +47,4 @@ def handle_some_event():
     log_event("CRITICAL", "This is a critical message: a serious error occurred.")
     print("Event handled")  # Отладочное сообщение на экран
 
-# Пример вызова функцииF
-handle_some_event()
+# Пример вызова функции
