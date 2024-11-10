@@ -58,21 +58,21 @@ def start(message):
     bot.send_message(message.chat.id, f"Hello {message.chat.username}!")
     log_event("INFO", f"User {message.chat.username} started the bot.")
 
-@bot.message_handler(commands=['addevent'])
+@bot.message_handler(commands=['add'])
 def add_new_occasion(message):
     #increment_message_count()  # Увеличиваем счётчик сообщений
     #increment_total_users()     # Увеличиваем общее количество пользователей
     bot.send_message(message.chat.id, "Insert the date of the event. Please use the format DD.MM.YYYY.")
     transaction.add_transaction(message.chat.id, False)
 
-@bot.message_handler(commands=['addeventinline'])
+@bot.message_handler(commands=['addinline'])
 def add_new_inline_event(message):  # Message format: DD.MM.YYYY - HH:mm - Event name - repeating
     #increment_message_count()  # Увеличиваем счётчик сообщений
     #increment_total_users()     # Увеличиваем общее количество пользователей
     transaction.add_transaction(message.chat.id, True)
     bot.send_message(message.chat.id, bot_message_text.transaction_messages_eng.get('inline_event_info'))
 
-@bot.message_handler(commands=['deleteevent'])
+@bot.message_handler(commands=['delete'])
 def delete_holiday(message):
     #increment_message_count()  # Увеличиваем счётчик сообщений
     chat_events = event_service.get_events_by_chat_id(message.chat.id)
@@ -87,7 +87,7 @@ def callback_query(callback):
     event_service.delete_data_from_db(callback.data)
     bot.send_message(callback.message.chat.id, "Event deleted")
 
-@bot.message_handler(commands=['list'])
+@bot.message_handler(commands=['show'])
 def all_holidays(message):
     events = event_service.get_events_by_chat_id(message.chat.id)
     reply = ""
