@@ -5,10 +5,8 @@ from transaction import chat_id_in_transaction, process_transaction, check_trans
 from time import sleep
 import telebot
 from telebot import types
-from datetime import datetime, timezone
 import event_service
 import threading
-import os
 from logger import log_event
 import secret_parser
 import sys
@@ -29,12 +27,13 @@ def check_date():
         log_event("INFO", "Checking date...")
         is_eventful_day = event_service.check_dates()
         if is_eventful_day:
-            events_for_today = event_service.get_events_by_today()
-            for event in events_for_today:
+            events = event_service.get_events_by_datetime()
+            for event in events:
                 bot.send_message(event[0], f'Don\'t forget about {event[2]}!')
-            event_service.update_events(events_for_today)
+                event_service.delete_data_from_db(event[3])
+            event_service.update_date()
         else:
-            sleep(3600)
+            sleep(30)
 
 def send_transaction_timeout_message():
     deleted = get_timed_out_transactions()

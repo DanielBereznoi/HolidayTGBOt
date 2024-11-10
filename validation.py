@@ -27,6 +27,7 @@ def is_past_datetime(date_str, hour, minute):
     inserted_date = str_date_to_date(date_str)
     event_datetime = datetime.combine(inserted_date, datetime.min.time()) + timedelta(hours=int(hour),
                                                                                  minutes=int(minute))
+    print(f'{str(event_datetime)} > {datetime.now} is { event_datetime > datetime.now()}')
     if event_datetime > datetime.now():
         return False
     return transaction_messages_eng.get("past_datetime")
