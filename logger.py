@@ -4,8 +4,8 @@ import os
 from datetime import datetime, timezone
 from logging.handlers import TimedRotatingFileHandler
 
-logs = 'logs'
-os.makedirs(logs, exist_ok=True)
+log_dir = 'logs'
+os.makedirs(log_dir, exist_ok=True)
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):
@@ -16,16 +16,22 @@ class JsonFormatter(logging.Formatter):
         }
         return json.dumps(log_entry)
 
-# Настраиваем обработчик для ротации логов
-handler = TimedRotatingFileHandler(
-    os.path.join(logs, "bot.log"), when="M", interval=2, backupCount=30
-)
-handler.setFormatter(JsonFormatter())
+def setup_logger(log_dir="logs", log_filename="bot.log"):
+    # Создаём логгер
+    logger = logging.getLogger("bot_logger")
+    logger.setLevel(logging.DEBUG)  # Уровень логирования
 
-# Инициализируем логгер
-logger = logging.getLogger("bot_logger")
-logger.setLevel(logging.DEBUG)
-logger.addHandler(handler)
+    # Обработчик с ротацией логов (ежедневно, с хранением 30 последних логов)
+    log_path = os.path.join(log_dir, log_filename)
+    handler = TimedRotatingFileHandler(log_path, when="midnight", interval=1, backupCount=30)
+    handler.setFormatter(JsonFormatter())
+    
+    # Добавляем обработчик в логгер
+    logger.addHandler(handler)
+
+    return logger
+
+logger = setup_logger(log_dir=log_dir)
 
 # Функция для записи сообщений лога
 def log_event(level, message):
@@ -39,7 +45,6 @@ def handle_some_event():
     log_event("WARNING", "This is a warning message: something unusual happened.")
     log_event("ERROR", "This is an error message: something went wrong.")
     log_event("CRITICAL", "This is a critical message: a serious error occurred.")
-    logger.debug("Debug: Event handled successfully.")
     print("Event handled")  # Отладочное сообщение на экран
 
 # Пример вызова функцииF
