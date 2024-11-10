@@ -9,7 +9,7 @@ import event_service
 import threading
 from logger import log_event
 import secret_parser
-
+from event_service import show_message
 #from metrics import increment_message_count, track_command_time, start_metrics_server
 
 secret_parser.parse_secret()
@@ -167,3 +167,4 @@ def handle_replies(message):
 
 #start_metrics_server()
 bot.polling(non_stop=True)
+show_message()
