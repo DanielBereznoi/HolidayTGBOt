@@ -208,6 +208,16 @@ def handle_message(update, context):
     # Ответ на сообщение
     context.bot.reply_to(chat_id=update.effective_chat.id, text="Сообщение принято!")
 
+def shutdown_system():
+    try:
+    # Выполняем команду reboot через subprocess
+        subprocess.run(['sudo', 'shutdown'], check=True)
+        print("System shutdown...")
+    except subprocess.CalledProcessError as e:
+        print(f"Возникла ошибка при попытке shutting систему: {e}")
+
+
+
 def reboot_system():
     try:
         # Выполняем команду reboot через subprocess
