@@ -116,7 +116,26 @@ def stop(message):
         # notify_admin("Critical event: Stop command received.")
     except Exception as e:
         log_event("ERROR", f"Error is on?: {e}")  # Логирование ошибки
-        
+
+@bot.message_handler(commands=['restart'])
+def restart_bot(message):
+    admin_id = 466698059
+    
+    if message.chat.id == admin_id:
+        bot.reply_to(message, "Restarting bot and pulling latest updates...")
+        log_event("INFO", f"Bot restart triggered by {message.chat.username}")
+        event_service.reboot_system()
+        # os.exit(0)  # Terminate the bot, systemd or supervisor will restart it
+    else:
+        bot.reply_to(message, "Unauthorized command.")
+
+@bot.message_handler(commands=['stop'])
+def stop_bot(message):
+    log_event("CRITICAL", "Bot is stopping as per command.")
+    print("Stopping the bot...")  # Можно добавить сообщение перед остановкой
+    sys.exit()
+
+
 @bot.message_handler()
 def handle_replies(message):
     if  message.text in command_list:
@@ -132,28 +151,6 @@ def handle_replies(message):
             bot.send_message(message.chat.id, return_message)
     else:
         bot.reply_to(message, "Please insert a valid command. To get a list of possible commands insert '/help'")
-
-@bot.message_handler(commands=['restart'])
-def restart_bot(message):
-    admin_id = 466698059
-    
-    if message.chat.id == admin_id:
-        bot.reply_to(message, "Restarting bot and pulling latest updates...")
-        log_event("INFO", f"Bot restart triggered by {message.chat.username}")
-        # os.exit(0)  # Terminate the bot, systemd or supervisor will restart it
-    else:
-        bot.reply_to(message, "Unauthorized command.")
-
-@bot.message_handler(commands=['stop'])
-def stop_bot(message):
-    log_event("CRITICAL", "Bot is stopping as per command.")
-    print("Stopping the bot...")  # Можно добавить сообщение перед остановкой
-    sys.exit()
-
-@bot.message_handler(commands=['restart'])
-def restart_bot(message):
-    bot.send_message(message.chat.id, "Restarting bot...")
-    event_service.reboot_system()
 
 #start_metrics_server()
 bot.polling(non_stop=True)
