@@ -79,7 +79,7 @@ def delete_holiday(message):
     markup = types.InlineKeyboardMarkup()
     for event in chat_events:
         markup.add(types.InlineKeyboardButton(text=f'{str(event[1])} - {str(event[2])}',
-                                              callback_data=str(event[3])))
+                                            callback_data=str(event[3])))
     bot.reply_to(message, reply_markup=markup, text="Select event what you want to delete")
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -131,7 +131,7 @@ def handle_replies(message):
         else:
             bot.send_message(message.chat.id, return_message)
     else:
-         bot.reply_to(message, "Please insert a valid command. To get a list of possible commands insert '/help'")
+        bot.reply_to(message, "Please insert a valid command. To get a list of possible commands insert '/help'")
 
 @bot.message_handler(commands=['restart'])
 def restart_bot(message):
