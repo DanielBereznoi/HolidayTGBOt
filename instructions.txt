@@ -1,0 +1,41 @@
+Для запуска сервиса нужно адаптировать скрипт и systemd
+
+
+sudo nano /home/project/tgbot/startup.sh
+
+#!/bin/bash
+
+# Переход в директорию для активации виртуального окружения
+cd /home/project/tgbot/
+source venelane/bin/activate  # Активация виртуального окружения
+
+# Переход в директорию проекта и обновление кода
+cd /home/project/tgbot/venelane/HoldiayTGBOt/
+git pull
+
+# Запуск основного скрипта проекта
+sudo /home/project/tgbot/venelane/bin/python /home/project/tgbot/venelane/HoldiayTGBOt/handlers.py
+
+
+sudo chmod +x /home/project/tgbot/startup.sh
+sudo nano /etc/systemd/system/holidaybot.service
+
+[Unit]
+Description=Запуск Python бота при старте системы
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/project/tgbot/
+ExecStart=/home/project/tgbot/startup.sh
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+
+
+sudo systemctl daemon-reload
+sudo systemctl start holidaybot.service
+sudo systemctl enable holidaybot.service
+sudo systemctl status holidaybot.service
