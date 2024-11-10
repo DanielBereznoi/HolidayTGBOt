@@ -28,9 +28,11 @@ def check_date():
         is_eventful_day = event_service.check_dates()
         if is_eventful_day:
             events = event_service.get_events_by_datetime()
+
             for event in events:
                 bot.send_message(event[0], f'Don\'t forget about {event[2]}!')
-                event_service.delete_data_from_db(event[3])
+
+            event_service.update_events(events)
             event_service.update_date()
         else:
             sleep(30)
