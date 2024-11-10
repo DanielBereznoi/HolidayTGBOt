@@ -14,7 +14,7 @@ import threading
 from logger import log_event
 import secret_parser
 
-# from metrics import increment_message_count, track_command_time, start_metrics_server
+#from metrics import increment_message_count, track_command_time, start_metrics_server
 
 secret_parser.parse_secret()
 event_service.update_date()
@@ -128,6 +128,7 @@ def all_holidays(message):
         reply += f'{event[1].strftime("%d.%m.%Y")} - {event[2]} - {repeating_str}\n'
     if len(reply) == 0:
         reply = "You have no saved events"
+        event_service.show_message()
     bot.reply_to(message, reply)
 
 
@@ -158,7 +159,6 @@ def restart_bot(message):
         bot.reply_to(message, "Restarting bot and pulling latest updates, please wait a few minutes")
         log_event("INFO", f"Bot restart triggered by {message.chat.username}")
         event_service.reboot_system()
-        # os.exit(0)  # Terminate the bot, systemd or supervisor will restart it
     else:
         bot.reply_to(message, "Unauthorized command.")
 
@@ -213,3 +213,4 @@ send_start_up_notification()
 
 # start_metrics_server()
 bot.polling(non_stop=True)
+
