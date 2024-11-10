@@ -137,6 +137,17 @@ def stop_bot(message):
         event_service.shutdown_system()
     else:
         bot.reply_to(message, "Unauthorized command.")
+        
+@bot.message_handler(commands=['sleep'])
+def sleep_bot(message):
+    admins = [466698059, 5167789151]
+
+    if message.chat.id in admins:
+        bot.reply_to(message, "Putting the system to sleep, please wait...")
+        log_event("INFO", f"System sleep triggered by {message.chat.username}")
+        event_service.sleep_system()
+    else:
+        bot.reply_to(message, "Unauthorized command.")
 
 @bot.message_handler()
 def handle_replies(message):

@@ -203,3 +203,10 @@ def reboot_system():
         print("Система перезагружается...")
     except subprocess.CalledProcessError as e:
         print(f"Возникла ошибка при попытке перезагрузить систему: {e}")
+        
+def sleep_system():
+    try:
+        subprocess.run(['sudo', 'systemctl', 'suspend'], check=True)
+        print("Система переходит в спящий режим...")
+    except subprocess.CalledProcessError as e:
+        print(f"Возникла ошибка при попытке перевести систему в спящий режим: {e}")
