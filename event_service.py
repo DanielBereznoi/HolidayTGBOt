@@ -205,22 +205,17 @@ def handle_message(update, context):
             text="Вы были заблокированы за спам, обратитесь к создателям этого шедевра")
         return
 
-    # Ответ на сообщение
     context.bot.reply_to(chat_id=update.effective_chat.id, text="Сообщение принято!")
 
 def shutdown_system():
     try:
-    # Выполняем команду reboot через subprocess
         subprocess.run(['sudo', 'shutdown'], check=True)
         print("System shutdown...")
     except subprocess.CalledProcessError as e:
         print(f"Возникла ошибка при попытке shutting систему: {e}")
 
-
-
 def reboot_system():
     try:
-        # Выполняем команду reboot через subprocess
         subprocess.run(['sudo', 'reboot'], check=True)
         print("Система перезагружается...")
     except subprocess.CalledProcessError as e:
