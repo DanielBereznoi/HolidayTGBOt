@@ -1,5 +1,5 @@
 transaction_messages_eng = {
-    'wrong_date_format': 'Invalid date format. Please use the format DD.MM.YYYY',
+    'wrong_date_format': 'Invalid date format. Please use the format DD.MM.YYYY. Don\'t use passed dates.',
     'wrong_time_format': 'Invalid time format. Please use 24-hour format, i.e. HH:MM',
     'past_datetime': 'Inserted date and time has already passed. Please insert future date and time',
     'wrong_name_length': 'Inserted name is too long. Event names must be under 100 characters',
