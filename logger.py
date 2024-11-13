@@ -1,8 +1,8 @@
 import logging
 import json
 import os
-from datetime import datetime, timezone
-from logging.handlers import TimedRotatingFileHandler, RotatingFileHandler
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
 import pytz
 
 log_dir = 'logs'
@@ -18,8 +18,8 @@ class JsonFormatter(logging.Formatter):
         ])
 
 def setup_logger(log_dir="logs", log_filename="log"):
-    logger = logging.getLogger("bot_logger")    # Создаём логгер
-    logger.setLevel(logging.DEBUG)  # Уровень логирования
+    logger = logging.getLogger("bot_logger")
+    logger.setLevel(logging.DEBUG)
 
     log_path = os.path.join(log_dir, log_filename)
     handler = RotatingFileHandler(log_path, maxBytes=10**6, backupCount=30)  # 1MB
@@ -34,5 +34,8 @@ def setup_logger(log_dir="logs", log_filename="log"):
 
 logger = setup_logger(log_dir=log_dir)
 
-def log_event(level, message):  # Функция для лога
-    logger.log(getattr(logging, level), message)
+def log_event(level, message):
+    log_level = getattr(logging, level.upper(), None)
+    if log_level is None:
+        raise ValueError(f"Invalid log level: {level}")
+    logger.log(log_level, message)
