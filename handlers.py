@@ -4,6 +4,7 @@ import bot_message_text
 import holidays
 import transaction
 from bot_utils import command_list
+from event_service import message_count
 from transaction import chat_id_in_transaction, process_transaction, check_transaction_timeout, \
     get_timed_out_transactions
 from time import sleep
@@ -98,15 +99,16 @@ def delete_holiday(message):
 @bot.message_handler(commands=['special'])
 def add_special_event(message):
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton(text="Estonian national holidays", callback_data="est_special"))
-    markup.add(types.InlineKeyboardButton(text="Russian national holidays", callback_data="rus_special"))
-    markup.add(types.InlineKeyboardButton(text="Dynamic national holidays", callback_data="dynamic_special"))
-    bot.send_message(message.chat.id, reply_markup=markup, text="Select what type of special event you want to add")
+    chat_id = message.chat.id
+    markup.add(types.InlineKeyboardButton(text="Estonian national holidays", callback_data=f'est_special,{chat_id}'))
+    markup.add(types.InlineKeyboardButton(text="Russian national holidays", callback_data=f'rus_special,{chat_id}'))
+    markup.add(types.InlineKeyboardButton(text="Dynamic national holidays", callback_data=f'dynamic_special,{chat_id}'))
+    bot.send_message(chat_id, reply_markup=markup, text="Select what type of special event you want to add")
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(callback):
-    btn_type, value = callback.data.split(',')
+    btn_type,chat_id, value = callback.data.split(',')
     markup = types.InlineKeyboardMarkup()
     cur_year = datetime.now().year
     next_year = datetime.now().year + 1
@@ -121,19 +123,19 @@ def callback_query(callback):
             # if holiday_date < datetime.now():
             #    holiday_date = datetime.strptime(f'{dm}.{next_year}', '%d.%m.%Y')
             markup.add(types.InlineKeyboardButton(text=est_holidays[holiday]['name_eng'],
-                                                  callback_data=f'special_holiday,{holiday}'))
+                                                  callback_data=f'special_holiday,{chat_id},{holiday}'))
 
     elif btn_type == 'rus_special':
         rus_holidays = holidays.russian_fixed_holidays
         for holiday in rus_holidays.keys():
             markup.add(types.InlineKeyboardButton(text=rus_holidays[holiday]['name_eng'],
-                                                  callback_data=f'special_holiday,{holiday}'))
+                                                  callback_data=f'special_holiday,{chat_id},{holiday}'))
     elif btn_type == 'dynamic_special':
         floating_holidays = holidays.get_floating_holidays(24)
         for holiday in floating_holidays.keys():
             markup.add(types.InlineKeyboardButton(text=floating_holidays[holiday]['name_eng'],
-                                                  callback_data=f'special_holiday,{holiday}'))
-
+                                                  callback_data=f'special_holiday,{chat_id},{holiday}'))
+    bot.send_message(callback.message.chat.id, "Select the event you want to add")
 
 @bot.message_handler(commands=['show'])
 def all_holidays(message):
