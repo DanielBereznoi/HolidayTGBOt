@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import bot_message_text
 import holidays
 import logger
 import transaction
 from bot_utils import command_list
-from event_service import message_count
 from transaction import chat_id_in_transaction, process_transaction, check_transaction_timeout, \
     get_timed_out_transactions
 from time import sleep
