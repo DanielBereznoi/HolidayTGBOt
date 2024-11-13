@@ -24,12 +24,7 @@ def setup_logger(log_dir="logs"):
     log_path = os.path.join(log_dir, log_filename)
     handler = RotatingFileHandler(log_path, maxBytes=10**6, backupCount=360)  # 1MB limit and ~3 months
     handler.setFormatter(JsonFormatter())
-
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(JsonFormatter())
-
     logger.addHandler(handler)
-    logger.addHandler(console_handler)
     return logger
 
 logger = setup_logger(log_dir=log_dir)
