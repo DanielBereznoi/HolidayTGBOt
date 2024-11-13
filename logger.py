@@ -34,3 +34,27 @@ def log_event(level, message):
     if log_level is None:
         raise ValueError(f"Invalid log level: {level}")
     logger.log(log_level, message)
+
+def get_last_log_lines(log_dir="logs", num_lines=100):
+    # Получаем список всех файлов в директории log_dir
+    log_files = [f for f in os.listdir(log_dir) if f.endswith('.log')]
+    
+    if not log_files:
+        return []
+
+    # Сортируем файлы по времени последнего изменения, чтобы получить последний файл
+    latest_log_file = max(log_files, key=lambda f: os.path.getmtime(os.path.join(log_dir, f)))
+
+    log_path = os.path.join(log_dir, latest_log_file)
+    
+    # Открываем последний лог файл и считываем последние num_lines строк
+    with open(log_path, 'r') as f:
+        lines = f.readlines()
+    
+    # Возвращаем последние num_lines строк
+    return lines[-num_lines:]
+
+# Пример использования:
+last_log_lines = get_last_log_lines(log_dir)
+for line in last_log_lines:
+    print(line.strip())  # Печать логов
