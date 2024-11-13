@@ -135,7 +135,7 @@ def callback_query(callback):
         for holiday in floating_holidays.keys():
             markup.add(types.InlineKeyboardButton(text=floating_holidays[holiday]['name_eng'],
                                                   callback_data=f'special_holiday,{chat_id},{holiday}'))
-    bot.send_message(callback.message.chat.id, "Select the event you want to add")
+    bot.send_message(chat_id, reply_markup=markup, text="Select the event you want to add")
 
 @bot.message_handler(commands=['show'])
 def all_holidays(message):
