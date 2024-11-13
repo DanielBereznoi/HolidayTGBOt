@@ -53,8 +53,3 @@ def get_last_log_lines(log_dir="logs", num_lines=100):
     
     # Возвращаем последние num_lines строк
     return lines[-num_lines:]
-
-# Пример использования:
-last_log_lines = get_last_log_lines(log_dir)
-for line in last_log_lines:
-    print(line.strip())
