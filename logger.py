@@ -17,12 +17,12 @@ class JsonFormatter(logging.Formatter):
             record.getMessage()
         ])
 
-def setup_logger(log_dir="logs", log_filename="log"):
+def setup_logger(log_dir="logs"):
     logger = logging.getLogger("bot_logger")
     logger.setLevel(logging.DEBUG)
-
+    log_filename = datetime.now(TALLINN).strftime("%Y-%m-%d_%H-%M-%S") + ".log"
     log_path = os.path.join(log_dir, log_filename)
-    handler = RotatingFileHandler(log_path, maxBytes=10**6, backupCount=30)  # 1MB
+    handler = RotatingFileHandler(log_path, maxBytes=10**6, backupCount=360)  # 1MB limit and ~3 months
     handler.setFormatter(JsonFormatter())
 
     console_handler = logging.StreamHandler()
