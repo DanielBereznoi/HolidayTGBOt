@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import bot_message_text
 import holidays
+import logger
 import transaction
 from bot_utils import command_list
 from event_service import message_count
@@ -203,6 +204,12 @@ def sleep_bot(message):
         event_service.sleep_system()
     else:
         bot.reply_to(message, "Unauthorized command.")
+
+
+@bot.message_handler(commands=['log'])
+def show_logs(message):
+    if message.chat.id in admins:
+        bot.reply_to(message, text=logger.get_last_log_lines())
 
 
 @bot.message_handler()
