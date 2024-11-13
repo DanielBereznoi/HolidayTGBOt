@@ -122,21 +122,3 @@ def print_holidays(holidays, title):
     for holiday, date in holidays:
         print(f"{holiday}: {date.strftime('%Y-%m-%d')}")
 
-if __name__ == "__main__":
-    yeara = datetime.now().year
-    print(datetime.now().year)
-
-    # Обновляем даты для фиксированных праздников
-    updated_estonian_fixed_holidays = [(name, date.replace(year=yeara)) for name, date in estonian_fixed_holidays]
-    updated_russian_fixed_holidays = [(name, date.replace(year=yeara)) for name, date in russian_fixed_holidays]
-    updated_floating_holidays = get_floating_holidays(yeara)
-
-    # Печатаем праздники
-def est_holidays(): 
-    print_holidays(updated_estonian_fixed_holidays, "Эстонские государственные праздники")
-    
-def rus_holidays():
-    print_holidays(updated_russian_fixed_holidays, "Русские праздники")
-    
-def dynamic_holidays():
-    print_holidays(updated_floating_holidays, "Плавающие праздники")
