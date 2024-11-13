@@ -1,7 +1,4 @@
 from datetime import datetime, timedelta
-
-from six import print_
-
 import bot_message_text
 import holidays
 import transaction
