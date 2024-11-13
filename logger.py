@@ -57,4 +57,4 @@ def get_last_log_lines(log_dir="logs", num_lines=100):
 # Пример использования:
 last_log_lines = get_last_log_lines(log_dir)
 for line in last_log_lines:
-    print(line.strip())  # Печать логов
+    print(line.strip())
