@@ -20,7 +20,7 @@ class JsonFormatter(logging.Formatter):
 def setup_logger(log_dir="logs"):
     logger = logging.getLogger("bot_logger")
     logger.setLevel(logging.DEBUG)
-    log_filename = datetime.now(TALLINN).strftime("%Y-%m-%d_%H-%M-%S") + ".log"
+    log_filename = datetime.now(TALLINN).strftime("%Y-%m-%d___%H-%M-%S") + ".log"
     log_path = os.path.join(log_dir, log_filename)
     handler = RotatingFileHandler(log_path, maxBytes=10**6, backupCount=360)  # 1MB limit and ~3 months
     handler.setFormatter(JsonFormatter())
@@ -52,4 +52,4 @@ def get_last_log_lines(log_dir="logs", num_lines=100):
         lines = f.readlines()
     log_event("INFO", message=lines)
     # Возвращаем последние num_lines строк
-    return lines[-num_lines:]
+    return lines[-num_lines:] if len(lines) >= num_lines else lines
