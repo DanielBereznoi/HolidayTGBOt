@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import bot_message_text
 import holidays
@@ -14,7 +14,7 @@ import threading
 from logger import log_event
 import secret_parser
 
-#from metrics import increment_message_count, track_command_time, start_metrics_server
+# from metrics import increment_message_count, track_command_time, start_metrics_server
 
 secret_parser.parse_secret()
 event_service.update_date()
@@ -107,14 +107,32 @@ def add_special_event(message):
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(callback):
     btn_type, value = callback.data.split(',')
+    markup = types.InlineKeyboardMarkup()
+    cur_year = datetime.now().year
+    next_year = datetime.now().year + 1
     if btn_type == 'delete':
         event_service.delete_data_from_db(callback.data)
         bot.send_message(callback.message.chat.id, "Event deleted")
-    elif btn_type == 'special':
-        est_fixed_holidays = holidays.estonian_fixed_holidays
-        rus_fixed_holidays = holidays.russian_fixed_holidays
-        cur_year_dynamic_holidays = holidays.get_floating_holidays(datetime.now().year)
-        coming_year_dynamic_holidays = holidays.get_floating_holidays(datetime.now().year + 1)
+    elif btn_type == 'est_special':
+        est_holidays = holidays.estonian_fixed_holidays
+        for holiday in est_holidays.keys():
+            # dm = est_holidays[holiday]['date']
+            # holiday_date = datetime.strptime(f'{dm}.{cur_year}', '%d.%m.%Y')
+            # if holiday_date < datetime.now():
+            #    holiday_date = datetime.strptime(f'{dm}.{next_year}', '%d.%m.%Y')
+            markup.add(types.InlineKeyboardButton(text=est_holidays[holiday]['name_eng'],
+                                                  callback_data=f'special_holiday,{holiday}'))
+
+    elif btn_type == 'rus_special':
+        rus_holidays = holidays.russian_fixed_holidays
+        for holiday in rus_holidays.keys():
+            markup.add(types.InlineKeyboardButton(text=rus_holidays[holiday]['name_eng'],
+                                                  callback_data=f'special_holiday,{holiday}'))
+    elif btn_type == 'dynamic_special':
+        floating_holidays = holidays.get_floating_holidays(24)
+        for holiday in floating_holidays.keys():
+            markup.add(types.InlineKeyboardButton(text=floating_holidays[holiday]['name_eng'],
+                                                  callback_data=f'special_holiday,{holiday}'))
 
 
 @bot.message_handler(commands=['show'])
@@ -153,8 +171,6 @@ def stop(message):
 
 @bot.message_handler(commands=['restart'])
 def restart_bot(message):
-
-
     if message.chat.id in admins:
         bot.reply_to(message, "Restarting bot and pulling latest updates, please wait a few minutes")
         log_event("INFO", f"Bot restart triggered by {message.chat.username}")
@@ -165,7 +181,6 @@ def restart_bot(message):
 
 @bot.message_handler(commands=['shutdown'])
 def stop_bot(message):
-
     if message.chat.id in admins:
         bot.reply_to(message, "Stopping bot!")
         log_event("CRITICAL", "The system is shutdown!")
@@ -210,7 +225,5 @@ def send_start_up_notification():
 
 send_start_up_notification()
 
-
 # start_metrics_server()
 bot.polling(non_stop=True)
-

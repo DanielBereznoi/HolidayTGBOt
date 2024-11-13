@@ -61,12 +61,12 @@ estonian_fixed_holidays = {
 
 # Русские праздники с фиксированными датами
 russian_fixed_holidays = {
-    'victory_day': {
+    'ru_victory_day': {
         'date': "09.05",
         'name_eng': "Victory Day",
         'name_rus': "День Победы"
     },
-    'defender_of_fatherland_day': {
+    'ru_defender_of_fatherland_day': {
         'date': "23.02",
         'name_eng': "Defender of the Fatherland Day",
         'name_rus': "День защитника Отечества"
