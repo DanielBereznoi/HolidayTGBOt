@@ -1,50 +1,60 @@
 import logging
 import json
 import os
-from datetime import datetime, timezone
-from logging.handlers import TimedRotatingFileHandler
+from datetime import datetime
+from logging.handlers import RotatingFileHandler
+import pytz
 
 log_dir = 'logs'
 os.makedirs(log_dir, exist_ok=True)
+TALLINN = pytz.timezone("Europe/Tallinn")
 
 class JsonFormatter(logging.Formatter):
     def format(self, record):
-        log_entry = {
-            'level': record.levelname,
-            'message': record.getMessage(),
-            'timestamp': datetime.now(timezone.utc).isoformat()
-        }
-        return json.dumps(log_entry)
+        return json.dumps([
+            datetime.now(TALLINN).strftime('%Y-%m-%d %H:%M:%S'),
+            record.levelname,
+            record.getMessage()
+        ])
 
-def setup_logger(log_dir="logs", log_filename="bot.log"):
-    # Создаём логгер
+def setup_logger(log_dir="logs"):
     logger = logging.getLogger("bot_logger")
-    logger.setLevel(logging.DEBUG)  # Уровень логирования
-
-    # Обработчик с ротацией логов (ежедневно, с хранением 30 последних логов)
+    logger.setLevel(logging.DEBUG)
+    log_filename = datetime.now(TALLINN).strftime("%Y-%m-%d_%H-%M-%S") + ".log"
     log_path = os.path.join(log_dir, log_filename)
-    handler = TimedRotatingFileHandler(log_path, when="midnight", interval=1, backupCount=30)
+    handler = RotatingFileHandler(log_path, maxBytes=10**6, backupCount=360)  # 1MB limit and ~3 months
     handler.setFormatter(JsonFormatter())
-    
-    # Добавляем обработчик в логгер
     logger.addHandler(handler)
-
     return logger
 
 logger = setup_logger(log_dir=log_dir)
 
-# Функция для записи сообщений лога
 def log_event(level, message):
-    levels = {key: getattr(logging, key) for key in ['INFO', 'ERROR', 'CRITICAL', 'WARNING', 'DEBUG']}
-    logger.log(levels.get(level), message)
+    log_level = getattr(logging, level.upper(), None)
+    if log_level is None:
+        raise ValueError(f"Invalid log level: {level}")
+    logger.log(log_level, message)
 
-# Функция для обработки события и записи в лог
-def handle_some_event():
-    log_event("DEBUG", "This is a debug message: handling event started.")
-    log_event("INFO", "Some event occurred that may need attention.")
-    log_event("WARNING", "This is a warning message: something unusual happened.")
-    log_event("ERROR", "This is an error message: something went wrong.")
-    log_event("CRITICAL", "This is a critical message: a serious error occurred.")
-    print("Event handled")  # Отладочное сообщение на экран
+def get_last_log_lines(log_dir="logs", num_lines=100):
+    # Получаем список всех файлов в директории log_dir
+    log_files = [f for f in os.listdir(log_dir) if f.endswith('.log')]
+    
+    if not log_files:
+        return []
 
-# Пример вызова функции
+    # Сортируем файлы по времени последнего изменения, чтобы получить последний файл
+    latest_log_file = max(log_files, key=lambda f: os.path.getmtime(os.path.join(log_dir, f)))
+
+    log_path = os.path.join(log_dir, latest_log_file)
+    
+    # Открываем последний лог файл и считываем последние num_lines строк
+    with open(log_path, 'r') as f:
+        lines = f.readlines()
+    
+    # Возвращаем последние num_lines строк
+    return lines[-num_lines:]
+
+# Пример использования:
+last_log_lines = get_last_log_lines(log_dir)
+for line in last_log_lines:
+    print(line.strip())  # Печать логов

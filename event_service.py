@@ -211,5 +211,3 @@ def sleep_system():
     except subprocess.CalledProcessError as e:
         print(f"Возникла ошибка при попытке перевести систему в спящий режим: {e}")
 
-def show_message():
-    subprocess.run(['zenity', '--info', '--text', 'Всё ок'])

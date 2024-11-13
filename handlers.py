@@ -146,7 +146,6 @@ def all_holidays(message):
         reply += f'{event[1].strftime("%d.%m.%Y")} - {event[2]} - {repeating_str}\n'
     if len(reply) == 0:
         reply = "You have no saved events"
-        event_service.show_message()
     bot.reply_to(message, reply)
 
 
