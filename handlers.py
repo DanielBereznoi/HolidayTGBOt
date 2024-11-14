@@ -264,9 +264,11 @@ def handle_replies(message):
 
 
 def send_start_up_notification():
+    log_event('INFO')
+    message_text = "Bot has started"
     for admin in admins:
-        log_event('INFO', "Bot has started")
-        bot.send_message(admin, "Bot has started")
+        bot.send_message(admin, message_text)
+        log_event('INFO', f"Message sent to admin {admin}: {message_text}")
 
 
 send_start_up_notification()
