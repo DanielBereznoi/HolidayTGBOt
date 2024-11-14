@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from event_service import add_data_to_db
 
 # Эстонские государственные праздники с фиксированными датами
 estonian_fixed_holidays = {
@@ -122,3 +121,5 @@ def print_holidays(holidays, title):
     for holiday, date in holidays:
         print(f"{holiday}: {date.strftime('%Y-%m-%d')}")
 
+if __name__ == '__main__':
+    print(get_floating_holidays(2024))

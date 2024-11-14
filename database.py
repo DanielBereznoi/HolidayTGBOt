@@ -13,10 +13,14 @@ def get_connection():
 def execute_query(query, params=None):
     """Выполняет SQL-запрос и возвращает результат для SELECT-запросов"""
     try:
+        print("starting execution")
         with get_connection() as conn:
             with conn.cursor() as cursor:
+                print("executing query")
                 cursor.execute(query, params)
                 if query.strip().lower().startswith('select'):
                     return cursor.fetchall()
+                cursor.close()
+
     except psycopg2.Error as e:
         print(f"Ошибка при выполнении запроса: {e}")

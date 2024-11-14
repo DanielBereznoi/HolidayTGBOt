@@ -4,6 +4,7 @@ import time
 import subprocess
 import bot_utils
 import database
+import holidays
 
 nearest_event_datetime = None
 user_blacklist = []
@@ -42,9 +43,9 @@ def check_record_exists(chat_ID, event_timestamp, event_name):
     result = database.execute_query(query, (chat_ID, event_name, event_timestamp))
     return bool(result)  # Возвращаем True, если запись существует, и False в противном случае
 
-def delete_data_from_db(identifier):
+def delete_data_from_db(event_id):
     # SQL-запрос удаления данных
-    database.execute_query('DELETE FROM "Events" WHERE "ID" = %s', (identifier,))
+    database.execute_query(f'DELETE FROM "Events" WHERE "ID" = {event_id}')
     print("Данные удалены.")
     update_date()
 
@@ -211,3 +212,26 @@ def sleep_system():
     except subprocess.CalledProcessError as e:
         print(f"Возникла ошибка при попытке перевести систему в спящий режим: {e}")
 
+def choose_special_event_date(special_holiday_key, event_type):
+    cur_year = datetime.now().year
+    next_year = cur_year + 1
+    holiday_date = None
+    if event_type in ['est', 'rus']:
+        dm = None
+        if event_type == 'est':
+            est_holidays = holidays.estonian_fixed_holidays
+            dm = est_holidays[special_holiday_key]['date']
+        else:
+            rus_holidays = holidays.russian_fixed_holidays
+        holiday_date = datetime.strptime(f'{dm}.{cur_year}', '%d.%m.%Y')
+        if holiday_date < datetime.now():
+           holiday_date = datetime.strptime(f'{dm}.{next_year}', '%d.%m.%Y')
+    else:
+        cur_year_events = holidays.get_floating_holidays(cur_year)
+        holiday_date = datetime.strptime(cur_year_events[event_type]['date'], '%d.%m.%Y')
+        if holiday_date < datetime.now():
+            holiday_date = holidays.get_floating_holidays(next_year)[event_type]['date']
+    return holiday_date
+
+
+    pass
