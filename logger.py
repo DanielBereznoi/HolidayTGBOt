@@ -41,7 +41,7 @@ def get_last_log_lines(log_dir="logs", num_lines=100):
     
     if not log_files:
         return []
-
+    
     # Сортируем файлы по времени последнего изменения, чтобы получить последний файл
     latest_log_file = max(log_files, key=lambda f: os.path.getmtime(os.path.join(log_dir, f)))
 
@@ -50,6 +50,6 @@ def get_last_log_lines(log_dir="logs", num_lines=100):
     # Открываем последний лог файл и считываем последние num_lines строк
     with open(log_path, 'r') as f:
         lines = f.readlines()
-    log_event("INFO", message=lines)
+
     # Возвращаем последние num_lines строк
     return lines[-num_lines:] if len(lines) >= num_lines else lines

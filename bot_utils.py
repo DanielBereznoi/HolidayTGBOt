@@ -6,7 +6,7 @@ time_pattern = re.compile(r'^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$')
 date_format = "%d.%m.%Y"
 datetime_strformat = "%Y-%m-%d %H:%M:%S"
 command_list = ["start", "stop", "addevent", "deleteevent", "addholiday", "allevents"]
-repeating_flag_values =  ["yes", "y", "no", "n", "true", "false"]
+repeating_flag_values =  ["yes", "y", "no", "n", "true", "false", "t", "f"]
 
 def str_date_to_date(date_str):
     return datetime.strptime(date_str, date_format)
