@@ -52,7 +52,12 @@ def get_last_log_lines(log_dir="logs", num_lines=100):
         lines = f.readlines()
     
     # Преобразуем строки обратно в JSON
-    log_entries = [json.loads(line) for line in lines]
+    log_entries = []
+    for line in lines:
+        try:
+            log_entries.append(json.loads(line))  # пытаемся преобразовать строку в объект
+        except json.JSONDecodeError:
+            continue  # если ошибка, пропускаем строку
 
     # Возвращаем последние num_lines записей
     return log_entries[-num_lines:] if len(log_entries) >= num_lines else log_entries
