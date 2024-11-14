@@ -41,15 +41,18 @@ def get_last_log_lines(log_dir="logs", num_lines=100):
     
     if not log_files:
         return []
-
+    
     # Сортируем файлы по времени последнего изменения, чтобы получить последний файл
     latest_log_file = max(log_files, key=lambda f: os.path.getmtime(os.path.join(log_dir, f)))
 
     log_path = os.path.join(log_dir, latest_log_file)
     
-    # Открываем последний лог файл и считываем последние num_lines строк
+    # Открываем последний лог файл и считываем все строки как JSON
     with open(log_path, 'r') as f:
         lines = f.readlines()
-    log_event("INFO", message=lines)
-    # Возвращаем последние num_lines строк
-    return lines[-num_lines:] if len(lines) >= num_lines else lines
+    
+    # Преобразуем строки обратно в JSON
+    log_entries = [json.loads(line) for line in lines]
+
+    # Возвращаем последние num_lines записей
+    return log_entries[-num_lines:] if len(log_entries) >= num_lines else log_entries

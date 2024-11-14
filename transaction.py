@@ -39,7 +39,7 @@ def process_inline_transaction(message):
     name_invalid = is_invalid_event_name(name)
     repeating_flag_invalid = is_invalid_repeating_flag(repeating_flag)
     if not invalid_date and not invalid_time and not past_datetime and not name_invalid and not repeating_flag_invalid:
-        repeating = repeating_flag in ['y', 'true', 'yes']
+        repeating = repeating_flag in ['y', 'true', 'yes', 't' ]
         saved = event_service.add_data_to_db(message.chat.id, date_str, hour, minute, name, repeating)
         if saved:
             return False, f"Event added - {date_str} {hour}:{minute} {name}, repeating: {repeating}"
@@ -123,7 +123,7 @@ def process_multistep_transaction(message, transaction):
         if not flag_invalid:
             _, _, date, time_str, name = transaction
             hour, minute = time_str.split(":")
-            repeating = repeating_flag.lower() in ["yes", "y", "true"]
+            repeating = repeating_flag.lower() in ["yes", "y", "true", "t"]
             saved = event_service.add_data_to_db(chat_id, date, hour, minute, name, repeating)
             current_transactions.pop(chat_id)
             if saved:

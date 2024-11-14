@@ -193,8 +193,8 @@ def handle_message(update, context):
 
 def shutdown_system():
     try:
-        subprocess.run(['sudo', 'shutdown'], check=True)
-        print("System shutdown...")
+        subprocess.run(['sudo', 'shutdown', 'now'], check=True)
+        print("System is shutdown...")
     except subprocess.CalledProcessError as e:
         print(f"Возникла ошибка при попытке shutting систему: {e}")
 
