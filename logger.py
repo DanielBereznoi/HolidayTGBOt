@@ -27,7 +27,7 @@ def setup_logger(log_dir="logs"):
     logger.addHandler(handler)
     return logger
 
-# logger = setup_logger(log_dir=log_dir)
+logger = setup_logger(log_dir=log_dir)
 
 def log_event(level, message):
     log_level = getattr(logging, level.upper(), None)
