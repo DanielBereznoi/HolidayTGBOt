@@ -27,7 +27,7 @@ def setup_logger(log_dir="logs"):
     logger.addHandler(handler)
     return logger
 
-logger = setup_logger(log_dir=log_dir)
+# logger = setup_logger(log_dir=log_dir)
 
 def log_event(level, message):
     log_level = getattr(logging, level.upper(), None)
@@ -48,4 +48,11 @@ def get_last_log_lines(log_dir="logs", num_lines=100):
     with open(log_path, 'r') as f:
         lines = f.readlines()
 
-    return lines[-num_lines:]
+    result = ""
+    for line in lines[-num_lines:]:
+        result += line
+
+    return result
+
+if __name__ == '__main__':
+    print(get_last_log_lines())
