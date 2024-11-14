@@ -36,28 +36,16 @@ def log_event(level, message):
     logger.log(log_level, message)
 
 def get_last_log_lines(log_dir="logs", num_lines=100):
-    # Получаем список всех файлов в директории log_dir
     log_files = [f for f in os.listdir(log_dir) if f.endswith('.log')]
     
     if not log_files:
-        return []
-    
-    # Сортируем файлы по времени последнего изменения, чтобы получить последний файл
+        return ""
+
     latest_log_file = max(log_files, key=lambda f: os.path.getmtime(os.path.join(log_dir, f)))
 
     log_path = os.path.join(log_dir, latest_log_file)
-    
-    # Открываем последний лог файл и считываем все строки как JSON
+
     with open(log_path, 'r') as f:
         lines = f.readlines()
-    
-    # Преобразуем строки обратно в JSON
-    log_entries = []
-    for line in lines:
-        try:
-            log_entries.append(json.loads(line))  # пытаемся преобразовать строку в объект
-        except json.JSONDecodeError:
-            continue  # если ошибка, пропускаем строку
 
-    # Возвращаем последние num_lines записей
-    return log_entries[-num_lines:] if len(log_entries) >= num_lines else log_entries
+    return lines[-num_lines:]
