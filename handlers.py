@@ -1,8 +1,5 @@
 import json
 import re
-from datetime import datetime
-
-from six import print_
 
 import bot_message_text
 import holidays
