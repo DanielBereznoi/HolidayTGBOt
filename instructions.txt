@@ -39,6 +39,4 @@ sudo systemctl daemon-reload
 sudo systemctl start holidaybot.service
 sudo systemctl enable holidaybot.service
 sudo systemctl status holidaybot.service
-
 sudo systemctl stop holidaybot.service
-
