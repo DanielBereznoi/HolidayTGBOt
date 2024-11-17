@@ -9,11 +9,12 @@ cd /home/project/tgbot/
 source venelane/bin/activate  # Активация виртуального окружения
 
 # Переход в директорию проекта и обновление кода
-cd /home/project/tgbot/venelane/HoldiayTGBOt/
+cd /home/project/tgbot/venelane/HolidayTGBOt/
 git pull
 
 # Запуск основного скрипта проекта
-sudo /home/project/tgbot/venelane/bin/python /home/project/tgbot/venelane/HoldiayTGBOt/handlers.py
+sudo /home/project/tgbot/venelane/bin/python /home/project/tgbot/venelane/HolidayTGBOt/handlers.py
+
 
 sudo chmod +x /home/project/tgbot/startup.sh
 sudo nano /etc/systemd/system/holidaybot.service
