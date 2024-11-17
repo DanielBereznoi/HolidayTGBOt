@@ -17,6 +17,12 @@ class JsonFormatter(logging.Formatter):
             record.getMessage()
         ])
 
+class ExcludeInfoFilter(logging.Filter):
+    """Фильтр, исключающий записи уровня INFO."""
+    def filter(self, record):
+        return record.levelname != "INFO"
+        #return True
+    
 def setup_logger(log_dir="logs"):
     logger = logging.getLogger("bot_logger")
     logger.setLevel(logging.DEBUG)
@@ -24,6 +30,7 @@ def setup_logger(log_dir="logs"):
     log_path = os.path.join(log_dir, log_filename)
     handler = RotatingFileHandler(log_path, maxBytes=10**6, backupCount=360)  # 1MB limit and ~3 months
     handler.setFormatter(JsonFormatter())
+    handler.addFilter(ExcludeInfoFilter())
     logger.addHandler(handler)
     return logger
 
@@ -33,8 +40,7 @@ def log_event(level, message):
     log_level = getattr(logging, level.upper(), None)
     if log_level is None:
         raise ValueError(f"Invalid log level: {level}")
-    if level.upper() != "INFO":
-        logger.log(log_level, message)
+    logger.log(log_level, message)
 
 def get_last_log_lines(log_dir="logs", num_lines=100):
     log_files = [f for f in os.listdir(log_dir) if f.endswith('.log')]
