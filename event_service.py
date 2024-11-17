@@ -5,7 +5,7 @@ import subprocess
 import bot_utils
 import database
 import holidays
-from event_service import log_event
+from logger import log_event
 nearest_event_datetime = None
 user_blacklist = []
 
