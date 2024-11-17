@@ -5,7 +5,7 @@ import subprocess
 import bot_utils
 import database
 import holidays
-from event_service import log_event
+from logger import log_event
 nearest_event_datetime = None
 user_blacklist = []
 
@@ -39,7 +39,7 @@ def add_data_to_db(chat_ID, event_date, hour, minute, event_name, repeating):
             print("Ошибка: запись уже существует.")
             log_event("WARNING", f"Record already exists for {event_name} at {event_timestamp}")
             return False
-    
+
         database.execute_query(
             'INSERT INTO "Events" ("chat_ID", "event_name", "event_timestamp", "repeating") VALUES (%s, %s, %s, %s)',
             (chat_ID, event_name, event_timestamp, repeating))
@@ -49,7 +49,7 @@ def add_data_to_db(chat_ID, event_date, hour, minute, event_name, repeating):
     except Exception as e:
         log_event("ERROR", f"Error occurred while adding data to DB: {e}")
         return False
-    
+
 def check_record_exists(chat_ID, event_timestamp, event_name):
     """Проверка существования записи"""
     query = 'SELECT "ID" FROM "Events" WHERE "chat_ID" = %s AND "event_name" = %s AND "event_timestamp" = %s'
