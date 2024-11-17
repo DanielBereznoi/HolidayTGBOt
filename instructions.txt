@@ -1,6 +1,5 @@
 Для запуска сервиса нужно адаптировать скрипт и systemd
 
-
 sudo nano /home/project/tgbot/startup.sh
 
 #!/bin/bash
@@ -15,7 +14,6 @@ git pull
 
 # Запуск основного скрипта проекта
 sudo /home/project/tgbot/venelane/bin/python /home/project/tgbot/venelane/HoldiayTGBOt/handlers.py
-
 
 sudo chmod +x /home/project/tgbot/startup.sh
 sudo nano /etc/systemd/system/holidaybot.service

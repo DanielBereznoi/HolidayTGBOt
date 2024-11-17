@@ -33,7 +33,8 @@ def log_event(level, message):
     log_level = getattr(logging, level.upper(), None)
     if log_level is None:
         raise ValueError(f"Invalid log level: {level}")
-    logger.log(log_level, message)
+    if level.upper() != "INFO":
+        logger.log(log_level, message)
 
 def get_last_log_lines(log_dir="logs", num_lines=100):
     log_files = [f for f in os.listdir(log_dir) if f.endswith('.log')]
