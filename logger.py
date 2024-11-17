@@ -37,21 +37,15 @@ def log_event(level, message):
 
 def get_last_log_lines(log_dir="logs", num_lines=100):
     log_files = [f for f in os.listdir(log_dir) if f.endswith('.log')]
-    
     if not log_files:
         return ""
-
     latest_log_file = max(log_files, key=lambda f: os.path.getmtime(os.path.join(log_dir, f)))
-
     log_path = os.path.join(log_dir, latest_log_file)
-
     with open(log_path, 'r') as f:
         lines = f.readlines()
-
     result = ""
     for line in lines[-num_lines:]:
         result += line
-
     return result
 
 if __name__ == '__main__':
