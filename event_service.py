@@ -5,7 +5,7 @@ import subprocess
 import bot_utils
 import database
 import holidays
-
+from event_service import log_event
 nearest_event_datetime = None
 user_blacklist = []
 
@@ -15,28 +15,41 @@ def get_data_from_db():
 
     # Выводим данные
     print("Данные из таблицы:")
-    if rows:
-        for row in rows:
-            print(row)
-    else:
-        print("Нет данных в таблице.")
+    try:
+        if rows:
+            for row in rows:
+                print(row)
+                log_event("INFO", f"Data retrieved from DB: {rows}")
+        else:
+            print("Нет данных в таблице.")
+            log_event("WARNING", "No data found in the table.")
+        return rows
+    except Exception as e:
+        log_event("ERROR", f"Error occurred while retrieving data from DB: {e}")
 
 def add_data_to_db(chat_ID, event_date, hour, minute, event_name, repeating):
     """SQL-запрос добавления данных с новым столбцом"""
-    event_date = datetime.strptime(event_date, '%d.%m.%Y').date()
-    event_timestamp = datetime.combine(event_date, datetime.min.time()) + timedelta(hours=int(hour),
-                                                                                    minutes=int(minute))
-    print(event_timestamp)
-    if check_record_exists(chat_ID, event_timestamp, event_name):
-        print("Ошибка: запись уже существует.")
+    try:
+        event_date = datetime.strptime(event_date, '%d.%m.%Y').date()
+        event_timestamp = datetime.combine(event_date, datetime.min.time()) + timedelta(hours=int(hour),
+                                                                                        minutes=int(minute))
+        log_event("INFO", f"Attempting to add event: {event_name} at {event_timestamp} for chat_ID {chat_ID}")
+        print(event_timestamp)
+        if check_record_exists(chat_ID, event_timestamp, event_name):
+            print("Ошибка: запись уже существует.")
+            log_event("WARNING", f"Record already exists for {event_name} at {event_timestamp}")
+            return False
+    
+        database.execute_query(
+            'INSERT INTO "Events" ("chat_ID", "event_name", "event_timestamp", "repeating") VALUES (%s, %s, %s, %s)',
+            (chat_ID, event_name, event_timestamp, repeating))
+        update_date()
+        log_event("INFO", f"Event added successfully: {event_name} for chat_ID {chat_ID}")
+        return True
+    except Exception as e:
+        log_event("ERROR", f"Error occurred while adding data to DB: {e}")
         return False
-
-    database.execute_query(
-        'INSERT INTO "Events" ("chat_ID", "event_name", "event_timestamp", "repeating") VALUES (%s, %s, %s, %s)',
-        (chat_ID, event_name, event_timestamp, repeating))
-    update_date()
-    return True
-
+    
 def check_record_exists(chat_ID, event_timestamp, event_name):
     """Проверка существования записи"""
     query = 'SELECT "ID" FROM "Events" WHERE "chat_ID" = %s AND "event_name" = %s AND "event_timestamp" = %s'
