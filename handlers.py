@@ -4,6 +4,7 @@ from datetime import datetime
 from gc import callbacks
 
 import bot_message_text
+import bot_utils
 import holidays
 import logger
 import transaction
@@ -295,6 +296,20 @@ def show_logs(message):
     if message.chat.id in admins:
         bot.reply_to(message, text=logger.get_last_log_lines())
 
+@bot.message_handler(commands=['help'])
+def show_commands(message):
+    chat_id = message.chat.id
+    commands_to_show = []
+    normal_commands = bot_utils.commands
+    for key in normal_commands.keys():
+        command_pair = normal_commands.get(key)
+        commands_to_show.append(f'{command_pair.get('command')} - {command_pair.get("description")}')
+    if chat_id in admins:
+        admin_commands = bot_utils.admin_commands
+        for key in admin_commands.keys():
+            command_pair = admin_commands.get(key)
+            commands_to_show.append(f'{command_pair.get('command')} - {command_pair.get("description")}')
+    bot.send_message(chat_id, "\n".join(commands_to_show))
 
 @bot.message_handler()
 def handle_replies(message):
