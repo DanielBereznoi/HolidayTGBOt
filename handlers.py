@@ -1,7 +1,10 @@
 import json
 import re
+import time
 from datetime import datetime
 from gc import callbacks
+
+from requests import ReadTimeout
 
 import bot_message_text
 import bot_utils
@@ -338,4 +341,10 @@ def send_start_up_notification():
 send_start_up_notification()
 
 # start_metrics_server()
-bot.polling(non_stop=True)
+while True:
+    try:
+        bot.polling(non_stop=True)
+    except ReadTimeout as e:
+        logger.log_event('ERROR', f'Connection to telegram failed: {e}')
+        time.sleep(5)
+        continue
