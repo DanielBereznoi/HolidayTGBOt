@@ -135,7 +135,6 @@ def check_dates():
 
         # compared
         if nearest_event_datetime is not None:
-            print("Comparing dates")
             log_event("INFO", f"Comparing current datetime {current_datetime} with nearest event datetime {nearest_event_datetime}")
 
             minute_delta = timedelta(minutes=1)
