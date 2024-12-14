@@ -1,6 +1,7 @@
 import logging
 import json
 import os
+import uuid
 from datetime import datetime
 from logging.handlers import RotatingFileHandler
 import pytz
@@ -49,4 +50,9 @@ def get_last_log_lines(log_dir="logs", num_lines=50):
     return result
 
 if __name__ == '__main__':
-    print(get_last_log_lines())
+    pede = {
+        'sitt': {}
+    }
+    pede['sitt']['uks'] = "shit"
+    print(pede)
+    print(str(uuid.uuid4().int))

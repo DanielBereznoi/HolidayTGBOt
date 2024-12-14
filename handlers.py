@@ -1,7 +1,13 @@
 import json
 import re
+import time
+from datetime import datetime
+from gc import callbacks
+
+from requests import ReadTimeout
 
 import bot_message_text
+import bot_utils
 import holidays
 import logger
 import transaction
@@ -15,12 +21,22 @@ import event_service
 import threading
 from logger import log_event
 import secret_parser
+import uuid
 
 # from metrics import increment_message_count, track_command_time, start_metrics_server
 
 secret_parser.parse_secret()
 event_service.update_date()
 admins = [466698059, 5167789151]
+# {
+#   chat_id: {
+#       btn_id: {
+#
+#       }
+#   }
+#}
+
+btn_callback_data = {}
 bot = telebot.TeleBot(token=secret_parser.bot_token)
 
 
@@ -85,18 +101,24 @@ def add_new_inline_event(message):  # Message format: DD.MM.YYYY - HH:mm - Event
     bot.send_message(message.chat.id, bot_message_text.transaction_messages_eng.get('inline_event_info'))
 
 
+
 @bot.message_handler(commands=['delete'])
 def delete_holiday(message):
+    chat_id = message.chat.id
     # increment_message_count()  # Увеличиваем счётчик сообщений
     chat_events = event_service.get_events_by_chat_id(message.chat.id)
     markup = types.InlineKeyboardMarkup()
     for event in chat_events:
+        if chat_id not in btn_callback_data:
+            btn_callback_data[chat_id] = {}
+        btn_id = str(uuid.uuid4().int)
         data = {
             "type": "delete",
-           "chat_id": message.chat.id,
             "event_id": event[3]
         }
-        markup.add(types.InlineKeyboardButton(text=f'{str(event[1])} - {str(event[2])}', callback_data=f'{str(data)}'))
+        btn_callback_data[chat_id][btn_id] = data
+
+        markup.add(types.InlineKeyboardButton(text=f'{str(event[1])} - {str(event[2])}', callback_data=btn_id))
 
     bot.reply_to(message, reply_markup=markup, text="Select event what you want to delete")
 
@@ -105,25 +127,105 @@ def delete_holiday(message):
 def add_special_event(message):
     markup = types.InlineKeyboardMarkup()
     chat_id = message.chat.id
+    if chat_id not in btn_callback_data:
+        btn_callback_data[chat_id] = {}
+    data_est_btn_id = str(uuid.uuid4().int)
     data_est = {
-        "type": "est_special",
-        "chat_id": message.chat.id
+        "type": "est_special"
     }
+    btn_callback_data[chat_id][data_est_btn_id] = data_est
+
+    data_rus_btn_id = str(uuid.uuid4().int)
     data_rus = {
-        "type": "rus_special",
-        "chat_id": message.chat.id
+        "type": "rus_special"
     }
+    btn_callback_data[chat_id][data_rus_btn_id] = data_rus
+
+    data_dyn_btn_id = str(uuid.uuid4().int)
     data_dyn = {
-        "type": "dynamic_special",
-        "chat_id": message.chat.id
+        "type": "dynamic_special"
     }
+    btn_callback_data[chat_id][data_dyn_btn_id] = data_dyn
+    print(btn_callback_data)
     markup.add(
-        types.InlineKeyboardButton(text="Estonian national holidays", callback_data=f'{str(data_est)}'))
+        types.InlineKeyboardButton(text="Estonian national holidays", callback_data=data_est_btn_id))
     markup.add(
-        types.InlineKeyboardButton(text="Russian national holidays", callback_data=f'{str(data_rus)}'))
+
+        types.InlineKeyboardButton(text="Russian national holidays", callback_data=data_rus_btn_id))
     markup.add(
-        types.InlineKeyboardButton(text="Dynamic national holidays", callback_data=f'{str(data_dyn)}'))
+
+        types.InlineKeyboardButton(text="Dynamic national holidays", callback_data=data_dyn_btn_id))
     bot.send_message(chat_id, reply_markup=markup, text="Select what type of special event you want to add")
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(callback):
+    chat_id = callback.message.chat.id
+    btn_uuid = callback.data
+    btn_data = btn_callback_data[chat_id][btn_uuid]
+
+    btn_type = btn_data['type']
+    print(btn_type)
+
+    markup = types.InlineKeyboardMarkup()
+    if btn_type == 'delete':
+        event_service.delete_data_from_db(btn_data['event_id'])
+        bot.send_message(callback.message.chat.id, "Event deleted")
+    elif btn_type in ['est_special', 'rus_special', 'dynamic_special']:
+        data = {
+        }
+        if btn_type == 'est_special':
+            est_holidays = holidays.estonian_fixed_holidays
+            for holiday in est_holidays.keys():
+                data = {
+                    'type': "holiday",
+                    'holiday_name': est_holidays.get(holiday)['name_eng'],
+                    'date': event_service.choose_special_event_date(holiday, 'est')
+                }
+                event_btn_uuid = str(uuid.uuid4().int)
+                btn_callback_data[chat_id][event_btn_uuid] = data
+                markup.add(types.InlineKeyboardButton(text=est_holidays[holiday]['name_eng'],
+                                                      callback_data=event_btn_uuid))
+            bot.send_message(chat_id, reply_markup=markup, text="Select the event you want to add")
+        elif btn_type == 'rus_special':
+            rus_holidays = holidays.russian_fixed_holidays
+            for holiday in rus_holidays.keys():
+                data = {
+                    'type': "holiday",
+                    'holiday_name': rus_holidays.get(holiday)['name_eng'],
+                    'date': event_service.choose_special_event_date(holiday, 'rus')
+                }
+                event_btn_uuid = str(uuid.uuid4().int)
+                btn_callback_data[chat_id][event_btn_uuid] = data
+                markup.add(types.InlineKeyboardButton(text=rus_holidays[holiday]['name_eng'],
+                                                      callback_data=event_btn_uuid))
+            bot.send_message(chat_id, reply_markup=markup, text="Select the event you want to add")
+        elif btn_type == 'dynamic_special':
+            floating_holidays = holidays.get_floating_holidays(24)
+            for holiday in floating_holidays.keys():
+                data = {
+                    'type': "holiday",
+                    'holiday_name': floating_holidays.get(holiday)['name_eng'],
+                    'date': event_service.choose_special_event_date(holiday, 'dynamic')
+                }
+                event_btn_uuid = str(uuid.uuid4().int)
+                btn_callback_data[chat_id][event_btn_uuid] = data
+                markup.add(types.InlineKeyboardButton(text=floating_holidays[holiday]['name_eng'],
+                                                      callback_data=event_btn_uuid))
+            bot.send_message(chat_id, reply_markup=markup, text="Select the event you want to add")
+    elif btn_type == 'holiday':
+        print("special holiday")
+        event_date = datetime.strftime(btn_data['date'], "%d.%m.%Y")
+        event_name = btn_data['holiday_name']
+        hour = 8
+        minute = 0
+        repeating = False
+        saved = event_service.add_data_to_db(chat_id, event_date, hour, minute, event_name, repeating)
+        if saved:
+            bot.send_message(chat_id, text="Event successfully saved.")
+        else:
+            bot.send_message(chat_id, text=bot_message_text.transaction_messages_eng.get('event_not_saved'))
+        print(f'Date: {btn_data["date"]}, type: {type(btn_data["date"])}' )
+
 
 
 @bot.message_handler(commands=['show'])
@@ -139,51 +241,6 @@ def all_holidays(message):
         reply = "You have no saved events"
     bot.reply_to(message, reply)
 
-
-@bot.callback_query_handler(func=lambda call: True)
-def callback_query(callback):
-    callback_data = json.loads(re.sub(r"'", '"', callback.data))
-    btn_type =callback_data['type']
-
-    markup = types.InlineKeyboardMarkup()
-    if btn_type == 'delete':
-        event_service.delete_data_from_db(callback_data['event_id'])
-        bot.send_message(callback.message.chat.id, "Event deleted")
-    elif btn_type in ['est_special', 'rus_special', 'dynamic_special']:
-        chat_id = callback_data['chat_id']
-        data = {
-            "type": "special_holiday",
-            "chat_id": chat_id
-        }
-        if btn_type == 'est_special':
-            est_holidays = holidays.estonian_fixed_holidays
-            for holiday in est_holidays.keys():
-                data["holiday"] = holiday
-                data["date"] = event_service.choose_special_event_date(holiday, 'est')
-                markup.add(types.InlineKeyboardButton(text=est_holidays[holiday]['name_eng'],
-                                                      callback_data=f'{str(data)}'))
-            bot.send_message(chat_id, reply_markup=markup, text="Select the event you want to add")
-        elif btn_type == 'rus_special':
-            rus_holidays = holidays.russian_fixed_holidays
-            for holiday in rus_holidays.keys():
-                data["holiday"] = holiday
-                data["date"]= event_service.choose_special_event_date(holiday, 'rus')
-                markup.add(types.InlineKeyboardButton(text=rus_holidays[holiday]['name_eng'],
-                                                      callback_data=f'{str(data)}'))
-            bot.send_message(chat_id, reply_markup=markup, text="Select the event you want to add")
-        elif btn_type == 'dynamic_special':
-            floating_holidays = holidays.get_floating_holidays(24)
-            for holiday in floating_holidays.keys():
-                data["holiday"] = holiday
-                data["date"] = event_service.choose_special_event_date(holiday, 'dynamic')
-                markup.add(types.InlineKeyboardButton(text=floating_holidays[holiday]['name_eng'],
-                                                      callback_data=f'{str(data)}'))
-            bot.send_message(chat_id, reply_markup=markup, text="Select the event you want to add")
-        elif btn_type == 'special_holiday':
-            print(f'Date: {callback_data["date"]}, type: {type(callback.data["date"])}' )
-            #event_service.add_data_to_db(chat_id, callback_data['date'])
-
-        #bot.send_message(chat_id, reply_markup=markup, text="Select the event you want to add")
 
 
 @bot.message_handler(commands=['cancel'])
@@ -242,13 +299,25 @@ def show_logs(message):
     if message.chat.id in admins:
         bot.reply_to(message, text=logger.get_last_log_lines())
 
+@bot.message_handler(commands=['help'])
+def show_commands(message):
+    chat_id = message.chat.id
+    commands_to_show = []
+    normal_commands = bot_utils.commands
+    for key in normal_commands.keys():
+        command_pair = normal_commands.get(key)
+        commands_to_show.append(f'{command_pair.get('command')} - {command_pair.get("description")}')
+    if chat_id in admins:
+        admin_commands = bot_utils.admin_commands
+        for key in admin_commands.keys():
+            command_pair = admin_commands.get(key)
+            commands_to_show.append(f'{command_pair.get('command')} - {command_pair.get("description")}')
+    bot.send_message(chat_id, "\n".join(commands_to_show))
 
 @bot.message_handler()
 def handle_replies(message):
     if message.text in command_list:
         pass
-
-    log_event("WARNING", f"Unknown command received: {message.text}")
 
     if chat_id_in_transaction(message.chat.id):
         is_reply, return_message = process_transaction(message)
@@ -257,6 +326,7 @@ def handle_replies(message):
         else:
             bot.send_message(message.chat.id, return_message)
     else:
+        log_event("WARNING", f"Unknown command received: {message.text}")
         bot.reply_to(message, "Please insert a valid command. To get a list of possible commands insert '/help'")
 
 
@@ -271,4 +341,10 @@ def send_start_up_notification():
 send_start_up_notification()
 
 # start_metrics_server()
-bot.polling(non_stop=True)
+while True:
+    try:
+        bot.polling(non_stop=True)
+    except ReadTimeout as e:
+        logger.log_event('ERROR', f'Connection to telegram failed: {e}')
+        time.sleep(5)
+        continue
