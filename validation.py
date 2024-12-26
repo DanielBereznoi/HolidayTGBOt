@@ -1,16 +1,23 @@
+from webbrowser import Error
+
 from bot_utils import str_date_to_date, date_format, time_pattern, special_char_pattern, repeating_flag_values
 from datetime import datetime, timedelta
 from bot_message_text import transaction_messages_eng
+from logger import logger
 
 
 def is_date_invalid(date_string):
     print("Validating date...")
 
     inserted_date = str_date_to_date(date_string)
-    if inserted_date >= str_date_to_date(datetime.today().strftime(date_format)):
-        return False
-    else:
-        return transaction_messages_eng.get('wrong_date_format')
+    try:
+        if inserted_date >= str_date_to_date(datetime.today().strftime(date_format)):
+            return False
+        else:
+            return transaction_messages_eng.get('wrong_date_format')
+    except Error as e:
+        logger.log_event('ERROR', f'There was an error: {e}')
+
 
 
 
